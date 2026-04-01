@@ -178,12 +178,20 @@ export default function Home() {
             </svg>
             FaktureOnline
           </a>
-          <a
-            href="#prijava"
-            className="bg-amber-500 text-white text-sm font-semibold px-5 py-2.5 rounded-lg hover:bg-amber-600 transition-colors shadow-sm"
-          >
-            Probajte besplatno
-          </a>
+          <div className="flex items-center gap-3">
+            <a
+              href="/login"
+              className="text-sm font-medium text-slate-600 hover:text-teal-600 transition-colors"
+            >
+              Prijavite se
+            </a>
+            <a
+              href="/register"
+              className="bg-amber-500 text-white text-sm font-semibold px-5 py-2.5 rounded-lg hover:bg-amber-600 transition-colors shadow-sm"
+            >
+              Probajte besplatno
+            </a>
+          </div>
         </div>
       </nav>
 
@@ -206,7 +214,7 @@ export default function Home() {
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <a
-                  href="#prijava"
+                  href="/register"
                   className="inline-block bg-amber-500 text-white font-bold px-8 py-4 rounded-xl text-lg hover:bg-amber-600 transition-colors shadow-lg text-center"
                 >
                   Počnite besplatno →
@@ -607,7 +615,7 @@ export default function Home() {
                 ))}
               </ul>
               <a
-                href="#prijava"
+                href="/register"
                 className="block text-center border-2 border-teal-600 text-teal-600 font-bold px-6 py-3 rounded-xl hover:bg-teal-50 transition-colors"
               >
                 Počni besplatno →
@@ -645,7 +653,7 @@ export default function Home() {
                 ))}
               </ul>
               <a
-                href="#prijava"
+                href="/register"
                 className="block text-center bg-amber-500 text-white font-bold px-6 py-4 rounded-xl hover:bg-amber-600 transition-colors text-lg shadow-md"
               >
                 Započni besplatni period →
@@ -760,7 +768,7 @@ export default function Home() {
             Profesionalna faktura za 30 sekundi — 5 mesečno besplatno, zauvek. Počnite danas.
           </p>
           <a
-            href="#prijava"
+            href="/register"
             className="inline-block bg-amber-500 text-white font-bold px-8 py-4 rounded-xl text-lg hover:bg-amber-600 transition-colors shadow-lg"
           >
             Prijavite se sada →
@@ -910,7 +918,7 @@ export default function Home() {
             <div>
               <p className="font-bold text-white mb-3">Linkovi</p>
               <a href="#kako-radi" className="text-sm hover:text-white transition-colors block mb-1">Kako radi</a>
-              <a href="#prijava" className="text-sm hover:text-white transition-colors block mb-1">Prijavite se</a>
+              <a href="/register" className="text-sm hover:text-white transition-colors block mb-1">Prijavite se</a>
             </div>
           </div>
           <div className="border-t border-slate-800 pt-6 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs">
