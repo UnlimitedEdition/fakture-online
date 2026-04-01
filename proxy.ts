@@ -35,7 +35,8 @@ export async function proxy(request: NextRequest) {
     (request.nextUrl.pathname.startsWith("/dashboard") ||
       request.nextUrl.pathname.startsWith("/fakture") ||
       request.nextUrl.pathname.startsWith("/klijenti") ||
-      request.nextUrl.pathname.startsWith("/podesavanja"))
+      request.nextUrl.pathname.startsWith("/podesavanja") ||
+      request.nextUrl.pathname.startsWith("/admin"))
   ) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
@@ -62,6 +63,7 @@ export const config = {
     "/fakture/:path*",
     "/klijenti/:path*",
     "/podesavanja/:path*",
+    "/admin/:path*",
     "/login",
     "/register",
   ],
