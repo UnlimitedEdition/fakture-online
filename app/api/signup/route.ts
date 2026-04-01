@@ -12,6 +12,7 @@ export async function POST(req: NextRequest) {
       email: (formData.get("email") as string) || null,
       city: (formData.get("city") as string) || null,
       message: (formData.get("message") as string) || null,
+      business_type: (formData.get("business_type") as string) || null,
     };
 
     if (!data.contact_name || !data.phone) {
@@ -23,7 +24,7 @@ export async function POST(req: NextRequest) {
     const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
 
     if (supabaseUrl && supabaseKey) {
-      await fetch(`${supabaseUrl}/rest/v1/lead_signups`, {
+      const res = await fetch(`${supabaseUrl}/rest/v1/lead_signups`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -42,12 +43,19 @@ export async function POST(req: NextRequest) {
           source: "landing",
         }),
       });
+      if (!res.ok) {
+        console.error("Supabase error:", res.status, await res.text());
+      }
+    } else {
+      console.error("Missing SUPABASE_URL or SUPABASE_SERVICE_KEY");
     }
 
     // Send email notification via Resend
     const resendKey = process.env.RESEND_API_KEY;
+    const notificationEmail = process.env.NOTIFICATION_EMAIL || "mtosic0450@gmail.com";
+
     if (resendKey) {
-      await fetch("https://api.resend.com/emails", {
+      const res = await fetch("https://api.resend.com/emails", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -55,12 +63,13 @@ export async function POST(req: NextRequest) {
         },
         body: JSON.stringify({
           from: "FaktureOnline <onboarding@resend.dev>",
-          to: "mtosic0450@gmail.com",
+          to: notificationEmail,
           subject: `Nova prijava: ${data.business_name || "Nepoznat"} - ${data.contact_name}`,
           html: `
             <h2>Nova prijava sa landing stranice</h2>
-            <p><strong>Ni\u0161a:</strong> ${data.niche}</p>
+            <p><strong>Niša:</strong> ${data.niche}</p>
             <p><strong>Biznis:</strong> ${data.business_name}</p>
+            <p><strong>Tip:</strong> ${data.business_type || "-"}</p>
             <p><strong>Kontakt:</strong> ${data.contact_name}</p>
             <p><strong>Telefon:</strong> ${data.phone}</p>
             <p><strong>Email:</strong> ${data.email || "-"}</p>
@@ -69,11 +78,17 @@ export async function POST(req: NextRequest) {
           `,
         }),
       });
+      if (!res.ok) {
+        console.error("Resend error:", res.status, await res.text());
+      }
+    } else {
+      console.error("Missing RESEND_API_KEY");
     }
 
     // Redirect to thank-you
     return NextResponse.redirect(new URL("/hvala", req.url));
-  } catch {
-    return NextResponse.json({ error: "Greska pri slanju." }, { status: 500 });
+  } catch (err) {
+    console.error("Signup error:", err);
+    return NextResponse.json({ error: "Greška pri slanju." }, { status: 500 });
   }
 }

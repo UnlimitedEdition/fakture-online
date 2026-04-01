@@ -13,9 +13,16 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "FaktureOnline \u2014 Online fakture za freelancere",
+  title: "FaktureOnline — Online fakture za freelancere i paušalce",
   description:
-    "Kreirajte profesionalnu fakturu za 30 sekundi. Po\u0161aljite klijentu, pratite naplatu. Bez Excela.",
+    "Kreirajte profesionalnu fakturu za 30 sekundi. Pošaljite klijentu, pratite naplatu. Bez Excela. Besplatno za 5 faktura mesečno.",
+  keywords: "fakture online, fakturisanje, invoice, freelancer, paušalac, Srbija",
+  openGraph: {
+    title: "FaktureOnline — Profesionalna faktura za 30 sekundi",
+    description: "Bez Excela, bez muke. Kreirajte, pošaljite, naplatite.",
+    type: "website",
+    locale: "sr_RS",
+  },
 };
 
 export default function RootLayout({
