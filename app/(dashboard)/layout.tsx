@@ -14,11 +14,25 @@ export default async function DashboardLayout({
 
   if (!user) redirect("/login");
 
-  const { data: profile } = await supabase
+  let { data: profile } = await supabase
     .from("fo_profiles")
     .select("*")
     .eq("id", user.id)
     .single();
+
+  // Auto-create profile if missing (existing auth.users before triggers)
+  if (!profile) {
+    const { data: newProfile } = await supabase
+      .from("fo_profiles")
+      .upsert({
+        id: user.id,
+        email: user.email || "",
+        owner_name: user.user_metadata?.full_name || user.user_metadata?.name || "",
+      })
+      .select()
+      .single();
+    profile = newProfile;
+  }
 
   const displayName =
     profile?.owner_name || profile?.company_name || user.email || "Korisnik";
