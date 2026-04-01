@@ -22,10 +22,11 @@ export default async function DashboardLayout({
 
   const displayName =
     profile?.owner_name || profile?.company_name || user.email || "Korisnik";
+  const isAdmin = profile?.is_admin || false;
 
   return (
     <div className="min-h-screen bg-stone-50 flex">
-      <SidebarNav displayName={displayName} email={user.email || ""} />
+      <SidebarNav displayName={displayName} email={user.email || ""} isAdmin={isAdmin} />
       <main className="flex-1 ml-0 md:ml-64">
         <div className="p-4 md:p-8 max-w-7xl mx-auto">{children}</div>
       </main>
