@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { redirect } from "next/navigation";
 import { SidebarNav } from "./sidebar-nav";
 
@@ -14,7 +15,10 @@ export default async function DashboardLayout({
 
   if (!user) redirect("/login");
 
-  let { data: profile } = await supabase
+  // Use service role to bypass RLS — guaranteed to get profile + is_admin
+  const adminDb = createAdminClient();
+
+  let { data: profile } = await adminDb
     .from("fo_profiles")
     .select("*")
     .eq("id", user.id)
@@ -22,9 +26,9 @@ export default async function DashboardLayout({
 
   // Auto-create profile if missing (existing auth.users before triggers)
   if (!profile) {
-    const { data: newProfile } = await supabase
+    const { data: newProfile } = await adminDb
       .from("fo_profiles")
-      .upsert({
+      .insert({
         id: user.id,
         email: user.email || "",
         owner_name: user.user_metadata?.full_name || user.user_metadata?.name || "",

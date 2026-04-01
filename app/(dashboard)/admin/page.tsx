@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { redirect } from "next/navigation";
 import { AdminDashboard } from "./admin-dashboard";
 
@@ -9,8 +10,10 @@ export default async function AdminPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  // Check admin
-  const { data: profile } = await supabase
+  // Use service role to bypass RLS for admin check
+  const adminDb = createAdminClient();
+
+  const { data: profile } = await adminDb
     .from("fo_profiles")
     .select("is_admin")
     .eq("id", user.id)
@@ -20,8 +23,8 @@ export default async function AdminPage() {
     redirect("/dashboard");
   }
 
-  // Get admin stats
-  const { data: stats, error } = await supabase.rpc("fo_admin_stats");
+  // Get admin stats via service role
+  const { data: stats, error } = await adminDb.rpc("fo_admin_stats");
 
   if (error) {
     return (
