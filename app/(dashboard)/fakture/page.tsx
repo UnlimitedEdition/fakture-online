@@ -1,14 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-
-const statusConfig: Record<string, { label: string; color: string }> = {
-  draft: { label: "Nacrt", color: "bg-slate-100 text-slate-600" },
-  sent: { label: "Poslato", color: "bg-amber-100 text-amber-700" },
-  paid: { label: "Plaćeno", color: "bg-emerald-100 text-emerald-700" },
-  overdue: { label: "Kasni", color: "bg-red-100 text-red-700" },
-  cancelled: { label: "Otkazano", color: "bg-gray-100 text-gray-500" },
-};
+import { getInvoiceStatus } from "@/lib/invoice-status";
 
 export default async function FakturePage() {
   const supabase = await createClient();
@@ -78,7 +71,7 @@ export default async function FakturePage() {
               </thead>
               <tbody>
                 {list.map((inv) => {
-                  const s = statusConfig[inv.status] || statusConfig.draft;
+                  const s = getInvoiceStatus(inv.status);
                   return (
                     <tr key={inv.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
                       <td className="px-6 py-4">
@@ -116,7 +109,7 @@ export default async function FakturePage() {
           {/* Mobile cards */}
           <div className="md:hidden divide-y divide-gray-50">
             {list.map((inv) => {
-              const s = statusConfig[inv.status] || statusConfig.draft;
+              const s = getInvoiceStatus(inv.status);
               return (
                 <Link key={inv.id} href={`/fakture/${inv.id}`} className="block p-4 hover:bg-gray-50 transition-colors">
                   <div className="flex items-center justify-between mb-1">

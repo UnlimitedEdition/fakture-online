@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 /* ── Count-up hook ─────────────────────────────────────── */
@@ -172,25 +173,25 @@ export default function Home() {
       {/* ─── Navbar ─────────────────────────────────── */}
       <nav className="bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <a href="#" className="text-xl font-bold text-teal-600 flex items-center gap-2">
+          <Link href="/" className="text-xl font-bold text-teal-600 flex items-center gap-2">
             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
             </svg>
             FaktureOnline
-          </a>
+          </Link>
           <div className="flex items-center gap-3">
-            <a
+            <Link
               href="/login"
               className="text-sm font-medium text-slate-600 hover:text-teal-600 transition-colors"
             >
               Prijavite se
-            </a>
-            <a
+            </Link>
+            <Link
               href="/register"
               className="bg-amber-500 text-white text-sm font-semibold px-5 py-2.5 rounded-lg hover:bg-amber-600 transition-colors shadow-sm"
             >
               Probajte besplatno
-            </a>
+            </Link>
           </div>
         </div>
       </nav>
@@ -213,12 +214,12 @@ export default function Home() {
                 pratite naplatu. Bez Excela, bez muke.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
-                <a
+                <Link
                   href="/register"
                   className="inline-block bg-amber-500 text-white font-bold px-8 py-4 rounded-xl text-lg hover:bg-amber-600 transition-colors shadow-lg text-center"
                 >
                   Počnite besplatno →
-                </a>
+                </Link>
                 <a
                   href="#kako-radi"
                   className="inline-block text-teal-600 font-semibold px-8 py-4 rounded-xl text-lg hover:bg-teal-50 transition-colors text-center"
@@ -614,12 +615,12 @@ export default function Home() {
                   </li>
                 ))}
               </ul>
-              <a
+              <Link
                 href="/register"
                 className="block text-center border-2 border-teal-600 text-teal-600 font-bold px-6 py-3 rounded-xl hover:bg-teal-50 transition-colors"
               >
                 Počni besplatno →
-              </a>
+              </Link>
             </div>
 
             {/* Pro */}
@@ -652,12 +653,12 @@ export default function Home() {
                   </li>
                 ))}
               </ul>
-              <a
+              <Link
                 href="/register"
                 className="block text-center bg-amber-500 text-white font-bold px-6 py-4 rounded-xl hover:bg-amber-600 transition-colors text-lg shadow-md"
               >
                 Započni besplatni period →
-              </a>
+              </Link>
             </div>
           </div>
         </div>
@@ -767,12 +768,12 @@ export default function Home() {
           <p className="text-teal-100 text-lg mb-8">
             Profesionalna faktura za 30 sekundi — 5 mesečno besplatno, zauvek. Počnite danas.
           </p>
-          <a
+          <Link
             href="/register"
             className="inline-block bg-amber-500 text-white font-bold px-8 py-4 rounded-xl text-lg hover:bg-amber-600 transition-colors shadow-lg"
           >
             Prijavite se sada →
-          </a>
+          </Link>
         </div>
       </section>
 
@@ -912,13 +913,31 @@ export default function Home() {
             </div>
             <div>
               <p className="font-bold text-white mb-3">Kontakt</p>
-              <p className="text-sm">mtosic0450@gmail.com</p>
+              <a
+                href="mailto:podrska@fakture.online"
+                className="text-sm hover:text-white transition-colors"
+              >
+                podrska@fakture.online
+              </a>
               <p className="text-sm mt-1">Viber podrška dostupna</p>
             </div>
             <div>
               <p className="font-bold text-white mb-3">Linkovi</p>
-              <a href="#kako-radi" className="text-sm hover:text-white transition-colors block mb-1">Kako radi</a>
-              <a href="/register" className="text-sm hover:text-white transition-colors block mb-1">Prijavite se</a>
+              <a href="#kako-radi" className="text-sm hover:text-white transition-colors block mb-1">
+                Kako radi
+              </a>
+              <Link
+                href="/register"
+                className="text-sm hover:text-white transition-colors block mb-1"
+              >
+                Prijavite se
+              </Link>
+              <Link
+                href="/login"
+                className="text-sm hover:text-white transition-colors block mb-1"
+              >
+                Ulogujte se
+              </Link>
             </div>
           </div>
           <div className="border-t border-slate-800 pt-6 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs">

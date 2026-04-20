@@ -50,11 +50,10 @@ export async function POST(req: NextRequest) {
       console.error("Missing SUPABASE_URL or SUPABASE_SERVICE_KEY");
     }
 
-    // Send email notification via Resend
     const resendKey = process.env.RESEND_API_KEY;
-    const notificationEmail = process.env.NOTIFICATION_EMAIL || "mtosic0450@gmail.com";
+    const notificationEmail = process.env.NOTIFICATION_EMAIL;
 
-    if (resendKey) {
+    if (resendKey && notificationEmail) {
       const res = await fetch("https://api.resend.com/emails", {
         method: "POST",
         headers: {
@@ -81,8 +80,10 @@ export async function POST(req: NextRequest) {
       if (!res.ok) {
         console.error("Resend error:", res.status, await res.text());
       }
-    } else {
+    } else if (!resendKey) {
       console.error("Missing RESEND_API_KEY");
+    } else if (!notificationEmail) {
+      console.error("Missing NOTIFICATION_EMAIL");
     }
 
     // Redirect to thank-you

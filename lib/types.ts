@@ -13,6 +13,7 @@ export interface Profile {
   logo_url: string;
   invoice_prefix: string;
   next_invoice_number: number;
+  is_admin: boolean;
   created_at: string;
   updated_at: string;
 }

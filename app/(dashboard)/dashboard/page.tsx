@@ -1,14 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-
-const statusLabels: Record<string, { label: string; color: string }> = {
-  draft: { label: "Nacrt", color: "bg-slate-100 text-slate-600" },
-  sent: { label: "Poslato", color: "bg-amber-100 text-amber-700" },
-  paid: { label: "Plaćeno", color: "bg-emerald-100 text-emerald-700" },
-  overdue: { label: "Kasni", color: "bg-red-100 text-red-700" },
-  cancelled: { label: "Otkazano", color: "bg-gray-100 text-gray-500" },
-};
+import { getInvoiceStatus } from "@/lib/invoice-status";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -96,7 +89,7 @@ export default async function DashboardPage() {
           ) : (
             <div className="space-y-3">
               {recentInvoices.map((inv) => {
-                const s = statusLabels[inv.status] || statusLabels.draft;
+                const s = getInvoiceStatus(inv.status);
                 return (
                   <Link
                     key={inv.id}

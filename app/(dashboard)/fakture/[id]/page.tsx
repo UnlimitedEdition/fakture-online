@@ -1,15 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
+import { getInvoiceStatus } from "@/lib/invoice-status";
 import { InvoiceActions } from "./invoice-actions";
-
-const statusConfig: Record<string, { label: string; color: string }> = {
-  draft: { label: "Nacrt", color: "bg-slate-100 text-slate-600" },
-  sent: { label: "Poslato", color: "bg-amber-100 text-amber-700" },
-  paid: { label: "Plaćeno", color: "bg-emerald-100 text-emerald-700" },
-  overdue: { label: "Kasni", color: "bg-red-100 text-red-700" },
-  cancelled: { label: "Otkazano", color: "bg-gray-100 text-gray-500" },
-};
 
 export default async function FakturaDetailPage(props: { params: Promise<{ id: string }> }) {
   const { id } = await props.params;
@@ -40,7 +33,7 @@ export default async function FakturaDetailPage(props: { params: Promise<{ id: s
     .eq("id", user.id)
     .single();
 
-  const s = statusConfig[invoice.status] || statusConfig.draft;
+  const s = getInvoiceStatus(invoice.status);
 
   return (
     <div className="space-y-6 max-w-4xl">
