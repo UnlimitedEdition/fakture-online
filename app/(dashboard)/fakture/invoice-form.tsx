@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import type { Client, InvoiceItem } from "@/lib/types";
 import { createInvoice, updateInvoice } from "@/app/actions/invoices";
 
@@ -12,7 +13,12 @@ interface ItemRow {
   unit_price: number;
 }
 
-const emptyItem: ItemRow = { description: "", quantity: 1, unit: "kom", total: 0, unit_price: 0 } as ItemRow;
+const emptyItem: ItemRow = {
+  description: "",
+  quantity: 1,
+  unit: "kom",
+  unit_price: 0,
+};
 
 export function InvoiceForm({
   clients,
@@ -145,9 +151,9 @@ export function InvoiceForm({
             {clients.length === 0 && (
               <p className="text-xs text-amber-600 mt-1">
                 Nemate klijenata.{" "}
-                <a href="/klijenti/novi" className="underline">
+                <Link href="/klijenti/novi" className="underline">
                   Dodajte prvog
-                </a>
+                </Link>
               </p>
             )}
           </div>

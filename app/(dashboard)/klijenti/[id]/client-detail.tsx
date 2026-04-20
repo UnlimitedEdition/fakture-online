@@ -2,18 +2,10 @@
 
 import { useState } from "react";
 import { useActionState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { updateClientAction, deleteClient } from "@/app/actions/clients";
+import { getInvoiceStatus } from "@/lib/invoice-status";
 import type { Client } from "@/lib/types";
-
-const statusConfig: Record<string, { label: string; color: string }> = {
-  draft: { label: "Nacrt", color: "bg-slate-100 text-slate-600" },
-  sent: { label: "Poslato", color: "bg-amber-100 text-amber-700" },
-  paid: { label: "Plaćeno", color: "bg-emerald-100 text-emerald-700" },
-  overdue: { label: "Kasni", color: "bg-red-100 text-red-700" },
-  cancelled: { label: "Otkazano", color: "bg-gray-100 text-gray-500" },
-};
 
 interface InvoiceRow {
   id: string;
@@ -31,7 +23,6 @@ export function ClientDetail({
   client: Client;
   invoices: InvoiceRow[];
 }) {
-  const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -166,7 +157,7 @@ export function ClientDetail({
         ) : (
           <div className="space-y-2">
             {invoices.map((inv) => {
-              const s = statusConfig[inv.status] || statusConfig.draft;
+              const s = getInvoiceStatus(inv.status);
               return (
                 <Link
                   key={inv.id}

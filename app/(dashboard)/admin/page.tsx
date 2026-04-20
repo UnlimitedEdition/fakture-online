@@ -1,8 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { isAdmin } from "@/lib/admin";
 import { AdminDashboard } from "./admin-dashboard";
-
-const ADMIN_EMAILS = ["REDACTED_EMAIL"];
 
 export default async function AdminPage() {
   const supabase = await createClient();
@@ -11,11 +10,14 @@ export default async function AdminPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  if (!ADMIN_EMAILS.includes(user.email || "")) {
+  const { data: profile } = await supabase.rpc("fo_get_profile", {
+    p_user_id: user.id,
+  });
+
+  if (!isAdmin(user.email, profile?.is_admin)) {
     redirect("/dashboard");
   }
 
-  // Get admin stats via RPC (SECURITY DEFINER — bypasses RLS)
   const { data: stats, error } = await supabase.rpc("fo_admin_stats", {
     p_user_id: user.id,
   });
