@@ -143,7 +143,7 @@ export async function setSefApiKey(formData: FormData) {
     return { error: "SEF API ključ izgleda neispravno (premali)." };
   }
 
-  let encrypted: { ciphertext: string; iv: string };
+  let encrypted: { ciphertext: string; iv: string; kv: number };
   try {
     encrypted = await encryptSefApiKey(apiKey);
   } catch (err) {
@@ -171,6 +171,7 @@ export async function setSefApiKey(formData: FormData) {
   const update: Record<string, unknown> = {
     sef_api_key_encrypted: encrypted.ciphertext,
     sef_api_key_iv: encrypted.iv,
+    sef_api_key_kv: encrypted.kv,
     sef_demo_mode: demoMode,
     is_budget_user: isBudgetUser,
     jbkjs,

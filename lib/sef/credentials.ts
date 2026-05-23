@@ -10,7 +10,7 @@ export async function loadSefCredentials(userId: string): Promise<SefCredentials
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("fo_profiles")
-    .select("sef_api_key_encrypted, sef_api_key_iv, sef_demo_mode")
+    .select("sef_api_key_encrypted, sef_api_key_iv, sef_api_key_kv, sef_demo_mode")
     .eq("id", userId)
     .single();
 
@@ -19,7 +19,11 @@ export async function loadSefCredentials(userId: string): Promise<SefCredentials
 
   let apiKey: string;
   try {
-    apiKey = await decryptSefApiKey(data.sef_api_key_encrypted, data.sef_api_key_iv);
+    apiKey = await decryptSefApiKey(
+      data.sef_api_key_encrypted,
+      data.sef_api_key_iv,
+      data.sef_api_key_kv ?? 1,
+    );
   } catch (err) {
     console.error("[sef.credentials.decrypt]", {
       user_id: userId,

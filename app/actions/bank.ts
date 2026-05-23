@@ -24,6 +24,18 @@ export async function importBankFile(formData: FormData) {
     return { error: "Nepoznat format banke." };
   }
 
+  // H11: daily quota — tier-aware (free: 5/day, pro/business: 20/day)
+  const { data: canImport, error: quotaErr } = await supabase.rpc("fo_can_import_bank", {
+    p_max_per_day: 20,
+  });
+  if (quotaErr) {
+    console.error("[bank.import.quota]", { code: quotaErr.code });
+    return { error: "Greška pri proveri dnevnog limita." };
+  }
+  if (canImport === false) {
+    return { error: "Premašili ste dnevni limit od 20 uvoza izvoda. Pokušajte sutra." };
+  }
+
   const text = await file.text();
   const transactions = parseBankCsv(text, format as BankFormat);
 
