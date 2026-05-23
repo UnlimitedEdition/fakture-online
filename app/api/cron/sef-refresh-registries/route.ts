@@ -35,18 +35,37 @@ export async function GET(req: NextRequest) {
   const svc = serviceClient();
 
   // ---- SEF companies registry (uses any one user's API key — registry is global) ----
-  const { data: profile } = await svc
+  // Prefer a PROD-mode user (sef_demo_mode = false) so the cached registry
+  // reflects the live SEF environment. Fall back to any user if no prod
+  // users have been onboarded yet, but log clearly.
+  const prodProfile = await svc
     .from("fo_profiles")
-    .select("id")
+    .select("id, sef_demo_mode")
     .not("sef_api_key_encrypted", "is", null)
+    .eq("sef_demo_mode", false)
     .order("created_at", { ascending: true })
     .limit(1)
     .maybeSingle();
 
+  const profile =
+    prodProfile.data
+      ? prodProfile
+      : await svc
+          .from("fo_profiles")
+          .select("id, sef_demo_mode")
+          .not("sef_api_key_encrypted", "is", null)
+          .order("created_at", { ascending: true })
+          .limit(1)
+          .maybeSingle();
+
   let companiesUpdated = 0;
-  if (profile) {
-    const creds = await loadSefCredentials(profile.id);
+  if (profile.data) {
+    const creds = await loadSefCredentials(profile.data.id);
     if (creds) {
+      console.log("[cron.sef-refresh-registries]", {
+        refresh_user: profile.data.id,
+        mode: creds.isDemo ? "demo" : "prod",
+      });
       const res = await sefListAllCompanies(creds);
       if (res.ok) {
         const rows = unwrapCompanies(res.data);

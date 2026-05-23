@@ -1,10 +1,6 @@
 // SEF webhook callback receiver.
-// If user enables a callback URL in the SEF portal API settings, SEF will
-// POST status changes here. We authenticate via the per-user callback secret
-// (set during setSefApiKey) embedded in the URL or X-Callback-Secret header.
-//
-// SEF's documented callback payload shape is undocumented publicly; we accept
-// any JSON body and persist as audit entry, then enqueue a status refresh.
+// Authentication via X-Callback-Secret HEADER only (not query param —
+// secrets in URLs leak into access logs and CDN/proxy caches).
 
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
@@ -26,9 +22,7 @@ export async function POST(
   { params }: { params: Promise<{ userId: string }> },
 ) {
   const { userId } = await params;
-  const secretFromQuery = req.nextUrl.searchParams.get("secret");
-  const secretFromHeader = req.headers.get("x-callback-secret");
-  const providedSecret = secretFromQuery || secretFromHeader || "";
+  const providedSecret = req.headers.get("x-callback-secret") ?? "";
 
   if (!providedSecret || providedSecret.length < 32) {
     return NextResponse.json({ error: "missing or invalid secret" }, { status: 401 });

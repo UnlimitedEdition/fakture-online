@@ -10,7 +10,11 @@ import {
 } from "@/lib/sef/api/list-changes";
 import { sefGetInvoice, parseStatusResponse } from "@/lib/sef/api/get-status";
 import { sefGetSignedXml } from "@/lib/sef/api/get-xml";
+import { sha256Hex } from "@/lib/sef/key-encryption";
 import { mapSefRemoteStatus, type SefStatus } from "@/lib/sef/types";
+
+const ARCHIVE_BUCKET = "sef-xml";
+const TEN_YEARS_MS = 10 * 365 * 24 * 60 * 60 * 1000;
 
 export const dynamic = "force-dynamic";
 
@@ -112,11 +116,51 @@ export async function GET(req: NextRequest) {
           const sig = await sefGetSignedXml({ creds, salesInvoiceId: sefId });
           if (sig.ok && sig.raw) {
             try {
-              // Note: archiveXml uses request-scoped Supabase client (cookies).
-              // We skip archive here in cron — handled on next user-initiated checkSefStatus.
-              // (Alternative: pass service client into archive — left as future cleanup.)
-            } catch {
-              // ignore
+              const sha = await sha256Hex(sig.raw);
+              const bytes = Buffer.byteLength(sig.raw, "utf8");
+              const ts = new Date();
+              const yyyy = ts.getUTCFullYear();
+              const mm = String(ts.getUTCMonth() + 1).padStart(2, "0");
+              const dd = String(ts.getUTCDate()).padStart(2, "0");
+              const path = `${profile.id}/${yyyy}/${mm}/${dd}/signed/${invoice.id}-${sha.slice(0, 16)}.xml`;
+
+              const upload = await svc.storage
+                .from(ARCHIVE_BUCKET)
+                .upload(path, sig.raw, {
+                  contentType: "application/xml",
+                  upsert: false,
+                });
+
+              const alreadyExists = upload.error?.message?.toLowerCase().includes("already exists");
+              if (!upload.error || alreadyExists) {
+                await svc.from("fo_sef_archive").insert({
+                  user_id: profile.id,
+                  invoice_id: invoice.id,
+                  storage_path: path,
+                  storage_bucket: ARCHIVE_BUCKET,
+                  kind: "signed",
+                  sha256: sha,
+                  bytes,
+                  retention_until: new Date(ts.getTime() + TEN_YEARS_MS)
+                    .toISOString()
+                    .slice(0, 10),
+                });
+                await svc
+                  .from("fo_invoices")
+                  .update({ sef_signed_archive_path: path })
+                  .eq("id", invoice.id);
+              } else {
+                console.error("[cron.sef-poll-status.archive]", {
+                  invoice_id: invoice.id,
+                  message: upload.error?.message,
+                });
+              }
+            } catch (archiveErr) {
+              console.error("[cron.sef-poll-status.archive.exception]", {
+                invoice_id: invoice.id,
+                message:
+                  archiveErr instanceof Error ? archiveErr.message : "unknown",
+              });
             }
           }
         }

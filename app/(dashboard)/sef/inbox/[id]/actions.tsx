@@ -15,11 +15,15 @@ export function InboxActions({ inboxId }: { inboxId: string }) {
     if (!confirm("Da li želite da prihvatite ovu fakturu? Akcija se ne može poništiti.")) return;
     setError(null);
     startTransition(async () => {
-      const res = await acceptSefInbound(inboxId);
-      if ("error" in res && res.error) {
-        setError(res.error);
-      } else {
-        router.refresh();
+      try {
+        const res = await acceptSefInbound(inboxId);
+        if ("error" in res && res.error) {
+          setError(res.error);
+        } else {
+          router.refresh();
+        }
+      } catch {
+        setError("Greška pri prihvatanju fakture. Pokušajte ponovo.");
       }
     });
   };
@@ -31,12 +35,16 @@ export function InboxActions({ inboxId }: { inboxId: string }) {
     }
     setError(null);
     startTransition(async () => {
-      const res = await rejectSefInbound(inboxId, reason.trim());
-      if ("error" in res && res.error) {
-        setError(res.error);
-      } else {
-        setRejecting(false);
-        router.refresh();
+      try {
+        const res = await rejectSefInbound(inboxId, reason.trim());
+        if ("error" in res && res.error) {
+          setError(res.error);
+        } else {
+          setRejecting(false);
+          router.refresh();
+        }
+      } catch {
+        setError("Greška pri odbijanju fakture. Pokušajte ponovo.");
       }
     });
   };

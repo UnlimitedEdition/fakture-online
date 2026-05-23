@@ -96,34 +96,53 @@ export function InvoiceActions({
   };
 
   const handleCancelSef = async () => {
-    const comment = prompt("Razlog otkazivanja (opciono):") ?? undefined;
-    if (comment === null) return;
+    const rawComment = prompt("Razlog otkazivanja (opciono):");
+    if (rawComment === null) return;
+    const comment = rawComment || undefined;
     setLoading("sef-cancel");
-    const res = await cancelSefInvoice(invoiceId, comment);
-    if ("error" in res && res.error) alert(res.error);
-    else alert("Faktura je otkazana na SEF-u.");
-    setLoading("");
-    router.refresh();
+    try {
+      const res = await cancelSefInvoice(invoiceId, comment);
+      if ("error" in res && res.error) alert(res.error);
+      else alert("Faktura je otkazana na SEF-u.");
+    } catch (err) {
+      if (err && typeof err === "object" && "digest" in err) throw err;
+      alert("Greška pri otkazivanju.");
+    } finally {
+      setLoading("");
+      router.refresh();
+    }
   };
 
   const handleStornoSef = async () => {
     if (!confirm("Storniraćete ovu fakturu na SEF-u. Akcija je trajna. Nastaviti?")) return;
     const comment = prompt("Razlog storniranja (opciono):") ?? undefined;
     setLoading("sef-storno");
-    const res = await stornoSefInvoice(invoiceId, comment);
-    if ("error" in res && res.error) alert(res.error);
-    else alert("Faktura je stornirana.");
-    setLoading("");
-    router.refresh();
+    try {
+      const res = await stornoSefInvoice(invoiceId, comment);
+      if ("error" in res && res.error) alert(res.error);
+      else alert("Faktura je stornirana.");
+    } catch (err) {
+      if (err && typeof err === "object" && "digest" in err) throw err;
+      alert("Greška pri storniranju.");
+    } finally {
+      setLoading("");
+      router.refresh();
+    }
   };
 
   const handleCheckSef = async () => {
     setLoading("sef-check");
-    const res = await checkSefStatus(invoiceId);
-    if ("error" in res && res.error) alert(res.error);
-    else if ("success" in res && res.success) alert(`Status: ${res.status}`);
-    setLoading("");
-    router.refresh();
+    try {
+      const res = await checkSefStatus(invoiceId);
+      if ("error" in res && res.error) alert(res.error);
+      else if ("success" in res && res.success) alert(`Status: ${res.status}`);
+    } catch (err) {
+      if (err && typeof err === "object" && "digest" in err) throw err;
+      alert("Greška pri proveri statusa.");
+    } finally {
+      setLoading("");
+      router.refresh();
+    }
   };
 
   const handlePrint = () => window.print();

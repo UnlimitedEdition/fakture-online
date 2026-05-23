@@ -9,12 +9,14 @@ export function SefSettingsForm({
   isBudgetUser,
   jbkjs,
   callbackUrl,
+  callbackSecret,
 }: {
   hasKey: boolean;
   demoMode: boolean;
   isBudgetUser: boolean;
   jbkjs: string;
   callbackUrl: string | null;
+  callbackSecret: string | null;
 }) {
   const [pending, startTransition] = useTransition();
   const [message, setMessage] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
@@ -22,11 +24,15 @@ export function SefSettingsForm({
   const onSubmit = (formData: FormData) => {
     setMessage(null);
     startTransition(async () => {
-      const res = await setSefApiKey(formData);
-      if ("error" in res && res.error) {
-        setMessage({ kind: "err", text: res.error });
-      } else if ("success" in res && res.success) {
-        setMessage({ kind: "ok", text: "Sačuvano." });
+      try {
+        const res = await setSefApiKey(formData);
+        if ("error" in res && res.error) {
+          setMessage({ kind: "err", text: res.error });
+        } else if ("success" in res && res.success) {
+          setMessage({ kind: "ok", text: "Sačuvano." });
+        }
+      } catch {
+        setMessage({ kind: "err", text: "Greška pri čuvanju. Pokušajte ponovo." });
       }
     });
   };
@@ -35,11 +41,15 @@ export function SefSettingsForm({
     if (!confirm("Da li želite da uklonite SEF API ključ?")) return;
     setMessage(null);
     startTransition(async () => {
-      const res = await removeSefApiKey();
-      if ("error" in res && res.error) {
-        setMessage({ kind: "err", text: res.error });
-      } else {
-        setMessage({ kind: "ok", text: "Ključ uklonjen." });
+      try {
+        const res = await removeSefApiKey();
+        if ("error" in res && res.error) {
+          setMessage({ kind: "err", text: res.error });
+        } else {
+          setMessage({ kind: "ok", text: "Ključ uklonjen." });
+        }
+      } catch {
+        setMessage({ kind: "err", text: "Greška pri uklanjanju ključa." });
       }
     });
   };
@@ -119,9 +129,9 @@ export function SefSettingsForm({
       </div>
 
       {callbackUrl && (
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
-            Callback URL (postavite u SEF portalu pod API menadžment)
+        <div className="space-y-2 border-t border-gray-100 pt-4">
+          <label className="block text-sm font-medium text-slate-700">
+            Callback URL (opciono — postavite u SEF portalu pod API menadžment)
           </label>
           <input
             type="text"
@@ -129,8 +139,21 @@ export function SefSettingsForm({
             value={callbackUrl}
             className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-slate-600 font-mono text-xs"
           />
-          <p className="text-xs text-slate-400 mt-1">
-            Opciono — bez ovog, koristimo dnevni polling (status promene se vide sa zakašnjenjem od ~1 dan).
+          {callbackSecret && (
+            <>
+              <label className="block text-xs font-medium text-slate-500 mt-2">
+                Pošaljite kroz <code>X-Callback-Secret</code> header (NE kao URL parametar):
+              </label>
+              <input
+                type="text"
+                readOnly
+                value={callbackSecret}
+                className="w-full px-4 py-2 rounded-xl border border-gray-200 bg-gray-50 text-slate-600 font-mono text-xs"
+              />
+            </>
+          )}
+          <p className="text-xs text-slate-400">
+            Bez ovog, koristimo dnevni polling — status promene se vide sa ~1 dan zakašnjenja.
           </p>
         </div>
       )}

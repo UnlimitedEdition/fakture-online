@@ -36,6 +36,23 @@ export default async function IzmeniFakturuPage(props: { params: Promise<{ id: s
     }
     notFound();
   }
+
+  if (itemsRes.error || clientsRes.error) {
+    console.error("[fakture.izmeni.dependencies]", {
+      user_id: user.id,
+      invoice_id: id,
+      items_code: itemsRes.error?.code,
+      clients_code: clientsRes.error?.code,
+    });
+    return (
+      <div className="p-6">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
+          Greška pri učitavanju podataka za izmenu fakture. Pokušajte ponovo.
+        </div>
+      </div>
+    );
+  }
+
   const invoice = invoiceRes.data;
 
   return (

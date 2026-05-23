@@ -4,17 +4,42 @@ import { SefSettingsForm } from "./form";
 export default async function SefSettingsPage() {
   const { supabase, user } = await requireUser();
 
-  const { data: profile } = await supabase
+  const { data: profile, error } = await supabase
     .from("fo_profiles")
     .select("sef_api_key_encrypted, sef_demo_mode, is_budget_user, jbkjs, sef_callback_secret")
     .eq("id", user.id)
     .single();
 
+  if (error) {
+    console.error("[sef.settings.profile]", {
+      user_id: user.id,
+      code: error.code,
+      message: error.message,
+    });
+    return (
+      <div className="p-6">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
+          Neuspešno učitavanje SEF podešavanja. Osvežite stranicu.
+        </div>
+      </div>
+    );
+  }
+
   const hasKey = !!profile?.sef_api_key_encrypted;
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "";
-  const callbackUrl = profile?.sef_callback_secret
-    ? `${siteUrl}/api/sef/callback/${user.id}?secret=${profile.sef_callback_secret}`
-    : null;
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  let validSiteUrl: string | null = null;
+  if (siteUrl) {
+    try {
+      validSiteUrl = new URL(siteUrl).origin;
+    } catch {
+      validSiteUrl = null;
+    }
+  }
+  const callbackUrl =
+    profile?.sef_callback_secret && validSiteUrl
+      ? `${validSiteUrl}/api/sef/callback/${user.id}`
+      : null;
+  const callbackSecret = profile?.sef_callback_secret ?? null;
 
   return (
     <div className="space-y-6 max-w-2xl">
@@ -31,6 +56,7 @@ export default async function SefSettingsPage() {
         isBudgetUser={profile?.is_budget_user ?? false}
         jbkjs={profile?.jbkjs ?? ""}
         callbackUrl={callbackUrl}
+        callbackSecret={callbackSecret}
       />
 
       <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 text-sm text-amber-800">

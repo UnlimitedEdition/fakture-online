@@ -39,8 +39,26 @@ export default async function FakturaDetailPage(props: { params: Promise<{ id: s
     }
     notFound();
   }
+
+  if (itemsRes.error || profileRes.error || sefKeyRes.error) {
+    console.error("[fakture.detail.dependencies]", {
+      user_id: user.id,
+      invoice_id: id,
+      items_code: itemsRes.error?.code,
+      profile_code: profileRes.error?.code,
+      sef_key_code: sefKeyRes.error?.code,
+    });
+    return (
+      <div className="p-6">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
+          Greška pri učitavanju fakture. Pokušajte ponovo.
+        </div>
+      </div>
+    );
+  }
+
   const invoice = invoiceRes.data;
-  const items = itemsRes.data;
+  const items = itemsRes.data ?? [];
   const profile = profileRes.data;
 
   const s = getInvoiceStatus(invoice.status);

@@ -61,16 +61,20 @@ export function ClientDetail({
   const handleCheckSef = () => {
     setSefMessage(null);
     startCheckSef(async () => {
-      const res = await checkClientSefEligibility(client.id);
-      if ("error" in res && res.error) {
-        setSefMessage(res.error);
-      } else if ("registered" in res) {
-        setSefMessage(
-          res.registered
-            ? "Klijent je registrovan na SEF-u."
-            : "Klijent NIJE registrovan na SEF-u — ne možete mu poslati elektronsku fakturu.",
-        );
-        router.refresh();
+      try {
+        const res = await checkClientSefEligibility(client.id);
+        if ("error" in res && res.error) {
+          setSefMessage(res.error);
+        } else if ("registered" in res) {
+          setSefMessage(
+            res.registered
+              ? "Klijent je registrovan na SEF-u."
+              : "Klijent NIJE registrovan na SEF-u — ne možete mu poslati elektronsku fakturu.",
+          );
+          router.refresh();
+        }
+      } catch {
+        setSefMessage("Greška pri proveri SEF registracije. Pokušajte ponovo.");
       }
     });
   };
