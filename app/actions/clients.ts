@@ -30,6 +30,10 @@ export async function createClientAction(
       email: (formData.get("email") as string) || "",
       phone: (formData.get("phone") as string) || "",
       notes: (formData.get("notes") as string) || "",
+      is_budget_user: formData.get("is_budget_user") === "true",
+      jbkjs: ((formData.get("jbkjs") as string) || "").trim() || null,
+      is_foreign: formData.get("is_foreign") === "true",
+      country_code: ((formData.get("country_code") as string) || "RS").toUpperCase().slice(0, 2),
     })
     .select()
     .single();

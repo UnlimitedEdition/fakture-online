@@ -147,6 +147,55 @@ export default function NoviKlijentPage() {
             />
           </div>
 
+          <div className="sm:col-span-2 border-t border-gray-100 pt-5">
+            <h3 className="text-sm font-semibold text-slate-700 mb-3">SEF i strani klijenti</h3>
+            <div className="space-y-3">
+              <label className="flex items-center gap-3 text-sm text-slate-700">
+                <input
+                  type="checkbox"
+                  name="is_budget_user"
+                  value="true"
+                  className="w-4 h-4 rounded border-gray-300"
+                />
+                Budžetski korisnik (B2G — državna institucija)
+              </label>
+              <div>
+                <label htmlFor="jbkjs" className="block text-sm font-medium text-slate-700 mb-1">
+                  JBKJS (ako je budžetski korisnik)
+                </label>
+                <input
+                  id="jbkjs"
+                  name="jbkjs"
+                  type="text"
+                  placeholder="npr. 12345"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 outline-none text-slate-800 font-mono text-sm"
+                />
+              </div>
+              <label className="flex items-center gap-3 text-sm text-slate-700">
+                <input
+                  type="checkbox"
+                  name="is_foreign"
+                  value="true"
+                  className="w-4 h-4 rounded border-gray-300"
+                />
+                Strana firma (izvoz — bez PDV-a)
+              </label>
+              <div>
+                <label htmlFor="country_code" className="block text-sm font-medium text-slate-700 mb-1">
+                  Država (ISO 2-slova)
+                </label>
+                <input
+                  id="country_code"
+                  name="country_code"
+                  type="text"
+                  defaultValue="RS"
+                  maxLength={2}
+                  className="w-24 px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 outline-none text-slate-800 font-mono text-sm uppercase"
+                />
+              </div>
+            </div>
+          </div>
+
           <div className="sm:col-span-2">
             <label htmlFor="notes" className="block text-sm font-medium text-slate-700 mb-1">
               Beleška

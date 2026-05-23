@@ -8,7 +8,7 @@ export default async function FakturaDetailPage(props: { params: Promise<{ id: s
   const { id } = await props.params;
   const { supabase, user } = await requireUser();
 
-  const [invoiceRes, itemsRes, profileRes] = await Promise.all([
+  const [invoiceRes, itemsRes, profileRes, sefKeyRes] = await Promise.all([
     supabase
       .from("fo_invoices")
       .select("*, client:fo_clients(*)")
@@ -21,6 +21,11 @@ export default async function FakturaDetailPage(props: { params: Promise<{ id: s
       .eq("invoice_id", id)
       .order("sort_order"),
     supabase.rpc("fo_get_profile"),
+    supabase
+      .from("fo_profiles")
+      .select("sef_api_key_encrypted")
+      .eq("id", user.id)
+      .single(),
   ]);
 
   if (invoiceRes.error || !invoiceRes.data) {
@@ -53,7 +58,13 @@ export default async function FakturaDetailPage(props: { params: Promise<{ id: s
           </div>
           <p className="text-slate-500 text-sm mt-1">{invoice.client?.company_name}</p>
         </div>
-        <InvoiceActions invoiceId={id} status={invoice.status} hasClientEmail={!!invoice.client?.email} />
+        <InvoiceActions
+          invoiceId={id}
+          status={invoice.status}
+          hasClientEmail={!!invoice.client?.email}
+          sefStatus={invoice.sef_status ?? null}
+          sefEnabled={!!sefKeyRes.data?.sef_api_key_encrypted}
+        />
       </div>
 
       {/* Invoice card */}
