@@ -10,6 +10,7 @@ const PROTECTED_PREFIXES = [
   "/sef",
   "/knjige",
   "/banka",
+  "/orgs",
 ];
 
 function isProtectedPath(pathname: string): boolean {

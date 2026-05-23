@@ -4,6 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { logout } from "@/app/actions/auth";
+import { OrgSwitcher } from "./org-switcher";
+import type { OrgRow } from "@/lib/active-org";
 
 const navItems = [
   {
@@ -76,10 +78,14 @@ export function SidebarNav({
   displayName,
   email,
   isAdmin = false,
+  orgs = [],
+  activeOrgId = null,
 }: {
   displayName: string;
   email: string;
   isAdmin?: boolean;
+  orgs?: OrgRow[];
+  activeOrgId?: string | null;
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -140,6 +146,13 @@ export function SidebarNav({
             FaktureOnline
           </Link>
         </div>
+
+        {/* Org switcher */}
+        <OrgSwitcher
+          orgs={orgs}
+          activeOrgId={activeOrgId}
+          onItemClick={() => setOpen(false)}
+        />
 
         {/* Navigation */}
         <nav className="flex-1 p-4 space-y-1">

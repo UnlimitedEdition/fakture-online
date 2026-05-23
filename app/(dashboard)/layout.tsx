@@ -1,5 +1,6 @@
 import { requireUser } from "@/lib/supabase/server";
 import { isAdmin } from "@/lib/admin";
+import { loadActiveOrg } from "@/lib/active-org";
 import { SidebarNav } from "./sidebar-nav";
 import { ServiceWorkerRegister } from "./service-worker-register";
 import { InstallPrompt } from "./install-prompt";
@@ -22,6 +23,12 @@ export default async function DashboardLayout({
     });
   }
 
+  // Multi-firma: fetch orgs the user belongs to and resolve the active one
+  // (cookie-first, else first owner-role org). Even if 0018 backfilled a
+  // default org, brand-new users without data may have an empty list — the
+  // switcher gracefully hides itself in that case.
+  const { orgs, activeOrgId } = await loadActiveOrg(supabase);
+
   const displayName =
     profile?.owner_name || profile?.company_name || user.email || "Korisnik";
 
@@ -31,6 +38,8 @@ export default async function DashboardLayout({
         displayName={displayName}
         email={user.email ?? ""}
         isAdmin={isAdmin(user.email, profile?.is_admin)}
+        orgs={orgs}
+        activeOrgId={activeOrgId}
       />
       <main className="flex-1 ml-0 md:ml-64">
         <div className="p-4 md:p-8 max-w-7xl mx-auto">{children}</div>
