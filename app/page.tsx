@@ -201,8 +201,11 @@ export default function Home() {
         <div className="max-w-6xl mx-auto px-4 py-20 md:py-28">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
-              <div className="inline-block bg-teal-100 text-teal-700 text-sm font-medium px-4 py-1.5 rounded-full mb-6">
-                5 faktura mesečno besplatno — zauvek
+              <div className="inline-flex items-center gap-2 bg-teal-100 text-teal-700 text-sm font-medium px-4 py-1.5 rounded-full mb-6">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Usaglašeno sa SEF — slanje e-faktura uključeno
               </div>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6 text-slate-800">
                 Fakturišite <span className="text-teal-600">brže</span>.{" "}
@@ -210,8 +213,8 @@ export default function Home() {
                 Naplatite <span className="text-teal-600">pre</span>.
               </h1>
               <p className="text-lg md:text-xl text-slate-500 mb-8 leading-relaxed">
-                Profesionalna faktura za 30 sekundi — pošaljite klijentu,
-                pratite naplatu. Bez Excela, bez muke.
+                Profesionalna faktura za 30 sekundi — pošaljite klijentu na email
+                ili direktno na <strong>SEF</strong>, pratite naplatu. Bez Excela, bez muke.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link
@@ -372,6 +375,87 @@ export default function Home() {
                 <p className="text-emerald-800/70 leading-relaxed text-sm">{item.desc}</p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── SEF Compliance — competitive moat ──────── */}
+      <section className="py-16 md:py-24 bg-gradient-to-br from-indigo-50 via-white to-teal-50">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            <div>
+              <div className="inline-flex items-center gap-2 bg-indigo-100 text-indigo-700 text-sm font-bold px-4 py-1.5 rounded-full mb-4">
+                ZAKONSKA OBAVEZA
+              </div>
+              <h2 className="text-3xl md:text-4xl font-bold text-slate-800 mb-4">
+                Šaljite na SEF jednim klikom
+              </h2>
+              <p className="text-slate-600 leading-relaxed mb-6">
+                Sistem Elektronskih Faktura (SEF) je <strong>obavezan za sve B2B i B2G</strong>{" "}
+                transakcije u Srbiji od 2023. godine. FaktureOnline generiše ispravan UBL 2.1
+                XML, šalje direktno na SEF i prati status bez vašeg učešća.
+              </p>
+              <ul className="space-y-3 mb-6">
+                {[
+                  { title: "Svi tipovi dokumenata", desc: "Standardna faktura (380), knjižno odobrenje/storno (381), zaduženje (383), avansna faktura (386)" },
+                  { title: "Sve PDV kategorije", desc: "Standardna 20% i 10%, reverse charge, izvoz, oslobođeno, EU intra-community — svi Pravilnik kodovi uključeni" },
+                  { title: "Automatski status update", desc: "Dnevno povlačenje promena: poslato → odobreno/odbijeno → storniran" },
+                  { title: "B2G podrška", desc: "JBKJS za budžetske korisnike, broj porudžbine, broj ugovora — sve što država zahteva" },
+                  { title: "Inbox za primljene", desc: "Vidite fakture od dobavljača, prihvatite/odbijte sa razlogom — sve unutar aplikacije" },
+                  { title: "10-godišnja arhiva", desc: "Originalni XML čuvamo prema zakonu — instant pristup za poresku" },
+                ].map((item) => (
+                  <li key={item.title} className="flex items-start gap-3">
+                    <span className="text-emerald-500 mt-0.5 shrink-0">{icons.check}</span>
+                    <div>
+                      <p className="font-semibold text-slate-800 text-sm">{item.title}</p>
+                      <p className="text-slate-500 text-sm">{item.desc}</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+              <p className="text-xs text-slate-400">
+                Demo okruženje za testiranje uključeno. Bez doplate.
+              </p>
+            </div>
+
+            {/* Visual: SEF status flow */}
+            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
+              <div className="flex items-center gap-2 mb-5 pb-4 border-b border-gray-100">
+                <div className="w-2 h-2 rounded-full bg-emerald-400"></div>
+                <p className="text-xs font-bold text-slate-600">SEF — Sent Documents</p>
+                <span className="ml-auto text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">ACTIVE</span>
+              </div>
+              <div className="space-y-3">
+                {[
+                  { num: "FAK-2026-000045", client: "TechStart d.o.o.", status: "Odobreno", color: "bg-emerald-100 text-emerald-700", time: "Pre 12 min" },
+                  { num: "FAK-2026-000044", client: "Aroma Caffe", status: "Poslato", color: "bg-amber-100 text-amber-700", time: "Pre 1 sat" },
+                  { num: "STN-2026-000003", client: "Gradilište 33", status: "Storniran", color: "bg-gray-100 text-gray-500", time: "Jutros" },
+                  { num: "FAK-2026-000043", client: "MOC ad", status: "Odbijeno", color: "bg-red-100 text-red-700", time: "Juče" },
+                ].map((row) => (
+                  <div key={row.num} className="flex items-center justify-between p-3 rounded-xl bg-stone-50/50 hover:bg-stone-50 transition-colors">
+                    <div>
+                      <p className="text-sm font-mono font-semibold text-slate-800">{row.num}</p>
+                      <p className="text-xs text-slate-500">{row.client} · {row.time}</p>
+                    </div>
+                    <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${row.color}`}>{row.status}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-5 pt-4 border-t border-gray-100 grid grid-cols-3 gap-3 text-center">
+                <div>
+                  <p className="text-2xl font-bold text-slate-800">142</p>
+                  <p className="text-xs text-slate-400">Poslato</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-emerald-600">128</p>
+                  <p className="text-xs text-slate-400">Odobreno</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-amber-600">3</p>
+                  <p className="text-xs text-slate-400">Inbox</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -566,9 +650,9 @@ export default function Home() {
           <div ref={featuresRef} className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
               { icon: icons.zap, title: "Faktura za 30 sekundi", desc: "Izaberite klijenta, dodajte stavke, PDF se generiše automatski. Brže nego da otvorite Word." },
-              { icon: icons.mail, title: "Slanje jednim klikom", desc: "Klijent dobija email sa profesionalnom porukom i PDF fakturom u prilogu." },
+              { icon: icons.mail, title: "Slanje jednim klikom", desc: "Email klijentu ili direktno na SEF — vi birate. Status se prati automatski." },
               { icon: icons.chart, title: "Praćenje naplate", desc: "Plaćeno, čeka, kasni — sve na jednom dashboard-u. Podsetnik za kašnjenje jednim klikom." },
-              { icon: icons.users, title: "Baza klijenata", desc: "Jednom unesite klijenta — koristite ga na svakoj sledećoj fakturi bez ponovnog unosa." },
+              { icon: icons.users, title: "Baza klijenata", desc: "Jednom unesite klijenta — koristite ga na svakoj sledećoj fakturi. SEF eligibility check uključen." },
               { icon: icons.repeat, title: "Šabloni za ponavljajuće", desc: "Mesečna faktura jednim klikom — sa ažuriranim datumom i rednim brojem." },
               { icon: icons.phone, title: "Radi na telefonu", desc: "Napravite i pošaljite fakturu sa telefona — na gradilištu, kod klijenta, bilo gde." },
             ].map((f, i) => (
@@ -603,6 +687,7 @@ export default function Home() {
               <ul className="space-y-3 mb-8">
                 {[
                   "5 faktura mesečno",
+                  "Slanje na SEF (demo i produkcija)",
                   "PDF generisanje",
                   "Email slanje",
                   "1 korisnik",
@@ -636,6 +721,8 @@ export default function Home() {
               <ul className="space-y-3 mb-8">
                 {[
                   "Neograničen broj faktura",
+                  "Neograničeno SEF slanje (sa inbox-om)",
+                  "Svi SEF tipovi: storno, avans, knjižno odobrenje",
                   "PDF sa vašim logom",
                   "Email slanje + podsetnici za kašnjenje",
                   "Neograničen broj klijenata",
@@ -643,6 +730,7 @@ export default function Home() {
                   "Mesečni pregled prihoda",
                   "Šabloni za ponavljajuće fakture",
                   "Automatsko numerisanje",
+                  "10-godišnja zakonska arhiva XML-a",
                   "Export za poresku",
                   "Podrška putem Viber-a",
                   "Prvih 7 dana besplatno",

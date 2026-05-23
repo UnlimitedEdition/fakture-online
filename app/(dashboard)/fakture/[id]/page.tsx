@@ -1,37 +1,65 @@
-import { createClient } from "@/lib/supabase/server";
-import { redirect, notFound } from "next/navigation";
+import { requireUser } from "@/lib/supabase/server";
+import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getInvoiceStatus } from "@/lib/invoice-status";
 import { InvoiceActions } from "./invoice-actions";
 
 export default async function FakturaDetailPage(props: { params: Promise<{ id: string }> }) {
   const { id } = await props.params;
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const { supabase, user } = await requireUser();
 
-  const { data: invoice } = await supabase
-    .from("fo_invoices")
-    .select("*, client:fo_clients(*)")
-    .eq("id", id)
-    .eq("user_id", user.id)
-    .single();
+  const [invoiceRes, itemsRes, profileRes, sefKeyRes] = await Promise.all([
+    supabase
+      .from("fo_invoices")
+      .select("*, client:fo_clients(*)")
+      .eq("id", id)
+      .eq("user_id", user.id)
+      .single(),
+    supabase
+      .from("fo_invoice_items")
+      .select("*")
+      .eq("invoice_id", id)
+      .order("sort_order"),
+    supabase.rpc("fo_get_profile"),
+    supabase
+      .from("fo_profiles")
+      .select("sef_api_key_encrypted")
+      .eq("id", user.id)
+      .single(),
+  ]);
 
-  if (!invoice) notFound();
+  if (invoiceRes.error || !invoiceRes.data) {
+    if (invoiceRes.error?.code !== "PGRST116") {
+      console.error("[fakture.detail]", {
+        user_id: user.id,
+        invoice_id: id,
+        code: invoiceRes.error?.code,
+        message: invoiceRes.error?.message,
+      });
+    }
+    notFound();
+  }
 
-  const { data: items } = await supabase
-    .from("fo_invoice_items")
-    .select("*")
-    .eq("invoice_id", id)
-    .order("sort_order");
+  if (itemsRes.error || profileRes.error || sefKeyRes.error) {
+    console.error("[fakture.detail.dependencies]", {
+      user_id: user.id,
+      invoice_id: id,
+      items_code: itemsRes.error?.code,
+      profile_code: profileRes.error?.code,
+      sef_key_code: sefKeyRes.error?.code,
+    });
+    return (
+      <div className="p-6">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
+          Greška pri učitavanju fakture. Pokušajte ponovo.
+        </div>
+      </div>
+    );
+  }
 
-  const { data: profile } = await supabase
-    .from("fo_profiles")
-    .select("*")
-    .eq("id", user.id)
-    .single();
+  const invoice = invoiceRes.data;
+  const items = itemsRes.data ?? [];
+  const profile = profileRes.data;
 
   const s = getInvoiceStatus(invoice.status);
 
@@ -48,7 +76,13 @@ export default async function FakturaDetailPage(props: { params: Promise<{ id: s
           </div>
           <p className="text-slate-500 text-sm mt-1">{invoice.client?.company_name}</p>
         </div>
-        <InvoiceActions invoiceId={id} status={invoice.status} hasClientEmail={!!invoice.client?.email} />
+        <InvoiceActions
+          invoiceId={id}
+          status={invoice.status}
+          hasClientEmail={!!invoice.client?.email}
+          sefStatus={invoice.sef_status ?? null}
+          sefEnabled={!!sefKeyRes.data?.sef_api_key_encrypted}
+        />
       </div>
 
       {/* Invoice card */}

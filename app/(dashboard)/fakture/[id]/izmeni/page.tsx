@@ -1,14 +1,10 @@
-import { createClient } from "@/lib/supabase/server";
-import { redirect, notFound } from "next/navigation";
+import { requireUser } from "@/lib/supabase/server";
+import { notFound } from "next/navigation";
 import { InvoiceForm } from "../../invoice-form";
 
 export default async function IzmeniFakturuPage(props: { params: Promise<{ id: string }> }) {
   const { id } = await props.params;
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const { supabase, user } = await requireUser();
 
   const [invoiceRes, itemsRes, clientsRes] = await Promise.all([
     supabase
@@ -29,7 +25,34 @@ export default async function IzmeniFakturuPage(props: { params: Promise<{ id: s
       .order("company_name"),
   ]);
 
-  if (!invoiceRes.data) notFound();
+  if (invoiceRes.error || !invoiceRes.data) {
+    if (invoiceRes.error?.code !== "PGRST116") {
+      console.error("[fakture.izmeni]", {
+        user_id: user.id,
+        invoice_id: id,
+        code: invoiceRes.error?.code,
+        message: invoiceRes.error?.message,
+      });
+    }
+    notFound();
+  }
+
+  if (itemsRes.error || clientsRes.error) {
+    console.error("[fakture.izmeni.dependencies]", {
+      user_id: user.id,
+      invoice_id: id,
+      items_code: itemsRes.error?.code,
+      clients_code: clientsRes.error?.code,
+    });
+    return (
+      <div className="p-6">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
+          Greška pri učitavanju podataka za izmenu fakture. Pokušajte ponovo.
+        </div>
+      </div>
+    );
+  }
+
   const invoice = invoiceRes.data;
 
   return (

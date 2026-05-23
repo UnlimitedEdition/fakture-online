@@ -1,20 +1,17 @@
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
-import type { Profile } from "@/lib/types";
+import { requireUser } from "@/lib/supabase/server";
 import { ProfileForm } from "./profile-form";
 
 export default async function PodesavanjaPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const { supabase, user } = await requireUser();
 
-  const { data: profile } = await supabase
-    .from("fo_profiles")
-    .select("*")
-    .eq("id", user.id)
-    .single<Profile>();
+  const { data: profile, error } = await supabase.rpc("fo_get_profile");
+  if (error) {
+    console.error("[podesavanja.profile]", {
+      user_id: user.id,
+      code: error.code,
+      message: error.message,
+    });
+  }
 
   return (
     <div className="space-y-6">
@@ -25,7 +22,20 @@ export default async function PodesavanjaPage() {
         </p>
       </div>
 
-      <ProfileForm profile={profile} />
+      <ProfileForm profile={profile} accountEmail={user.email ?? ""} />
+
+      <div className="bg-white rounded-2xl border border-gray-100 p-6">
+        <h2 className="font-semibold text-slate-800 mb-1">Dodatna podešavanja</h2>
+        <p className="text-slate-500 text-sm mb-4">
+          E-fakture, integracije i napredne opcije.
+        </p>
+        <a
+          href="/podesavanja/sef"
+          className="inline-flex items-center gap-2 text-sm font-medium text-teal-600 hover:text-teal-700"
+        >
+          SEF integracija (Sistem Elektronskih Faktura) &rarr;
+        </a>
+      </div>
     </div>
   );
 }

@@ -1,14 +1,9 @@
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
+import { requireUser } from "@/lib/supabase/server";
 import Link from "next/link";
 import { getInvoiceStatus } from "@/lib/invoice-status";
 
 export default async function DashboardPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const { supabase, user } = await requireUser();
 
   const [invoicesRes, clientsRes, recentRes] = await Promise.all([
     supabase.from("fo_invoices").select("status, total").eq("user_id", user.id),
@@ -23,6 +18,22 @@ export default async function DashboardPage() {
       .order("created_at", { ascending: false })
       .limit(5),
   ]);
+
+  if (invoicesRes.error || clientsRes.error || recentRes.error) {
+    console.error("[dashboard.fetch]", {
+      user_id: user.id,
+      invoices: invoicesRes.error?.code,
+      clients: clientsRes.error?.code,
+      recent: recentRes.error?.code,
+    });
+    return (
+      <div className="p-6">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
+          Greška pri učitavanju pregleda. Pokušajte ponovo za nekoliko trenutaka.
+        </div>
+      </div>
+    );
+  }
 
   const invoices = invoicesRes.data || [];
   const totalClients = clientsRes.count || 0;
