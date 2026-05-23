@@ -41,6 +41,14 @@ export default async function PodesavanjaPage() {
           </li>
           <li>
             <a
+              href="/podesavanja/firme"
+              className="inline-flex items-center gap-2 text-sm font-medium text-teal-600 hover:text-teal-700"
+            >
+              Firme i članovi (multi-firma, pozivi računovođama) &rarr;
+            </a>
+          </li>
+          <li>
+            <a
               href="/podesavanja/nalog"
               className="inline-flex items-center gap-2 text-sm font-medium text-teal-600 hover:text-teal-700"
             >
