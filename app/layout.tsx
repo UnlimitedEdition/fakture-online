@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { headers } from "next/headers";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -37,11 +38,19 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Touching headers() opts the layout into dynamic rendering — required for
+  // nonce-based CSP. Next.js auto-applies the nonce to its framework <script>
+  // tags after parsing the Content-Security-Policy request header set by
+  // proxy.ts; we read x-nonce here only so any future <Script> / inline
+  // <style nonce> usage can attach it explicitly.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _nonce = (await headers()).get("x-nonce");
+
   return (
     <html
       lang="sr"
