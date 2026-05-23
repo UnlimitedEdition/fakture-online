@@ -20,10 +20,15 @@ function build(prefix: string, max: number, windowSec: number) {
 }
 
 const limiters = {
-  login: build("login", 5, 900),
-  register: build("register", 3, 3600),
-  signup: build("signup", 5, 3600),
-  email: build("email", 20, 3600),
+  login: build("login", 5, 900),                  // 5 / 15min
+  register: build("register", 3, 3600),           // 3 / hour
+  signup: build("signup", 5, 3600),               // 5 / hour
+  email: build("email", 20, 3600),                // 20 / hour
+  passwordReset: build("pwreset", 3, 3600),       // 3 / hour
+  invoiceMutate: build("inv.mutate", 60, 3600),   // 60 / hour
+  sefSend: build("sef.send", 30, 3600),           // 30 / hour
+  sefPoll: build("sef.poll", 60, 3600),           // 60 / hour
+  sefCallback: build("sef.cb", 30, 60),           // 30 / minute (per IP+userId)
 } as const;
 
 export type LimiterKind = keyof typeof limiters;
@@ -40,8 +45,11 @@ export async function checkRateLimit(
 ): Promise<RateLimitResult> {
   const limiter = limiters[kind];
   if (!limiter) {
-    // Fail-open when Upstash not configured — local dev convenience.
-    // In production both env vars MUST be set or every request is unlimited.
+    // Fail-CLOSED in production. Fail-OPEN only in development convenience.
+    if (process.env.NODE_ENV === "production") {
+      console.error("[rate-limit] Upstash not configured in production — denying", { kind });
+      return { allowed: false };
+    }
     return { allowed: true };
   }
   const result = await limiter.limit(identifier);

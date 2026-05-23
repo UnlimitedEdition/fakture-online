@@ -12,6 +12,7 @@ import { sefGetInvoice, parseStatusResponse } from "@/lib/sef/api/get-status";
 import { sefGetSignedXml } from "@/lib/sef/api/get-xml";
 import { sha256Hex } from "@/lib/sef/key-encryption";
 import { mapSefRemoteStatus, type SefStatus } from "@/lib/sef/types";
+import { safeEqual } from "@/lib/security/safe-equal";
 
 const ARCHIVE_BUCKET = "sef-xml";
 const TEN_YEARS_MS = 10 * 365 * 24 * 60 * 60 * 1000;
@@ -21,8 +22,7 @@ export const dynamic = "force-dynamic";
 function authOk(req: NextRequest): boolean {
   const expected = process.env.SEF_CRON_SECRET;
   if (!expected) return false;
-  const got = req.headers.get("x-cron-secret");
-  return got === expected;
+  return safeEqual(req.headers.get("x-cron-secret"), expected);
 }
 
 // Build a service-role Supabase client (bypasses RLS for cron sweep).

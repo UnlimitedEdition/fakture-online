@@ -67,9 +67,24 @@ export default function RegisterPage() {
               type="password"
               autoComplete="new-password"
               required
-              minLength={6}
+              minLength={12}
               className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all text-slate-800"
-              placeholder="Najmanje 6 karaktera"
+              placeholder="Min 12 karaktera, slova + brojevi + simbol"
+            />
+            <p className="text-xs text-slate-400 mt-1">
+              Bank-grade: najmanje 12 karaktera, kombinacija slova, brojeva i bar jednog simbola.
+            </p>
+          </div>
+
+          {/* Honeypot — invisible to humans, bots fill every field */}
+          <div className="absolute -left-[9999px] -top-[9999px]" aria-hidden="true">
+            <label htmlFor="website">Vaš sajt (ostavite prazno)</label>
+            <input
+              id="website"
+              name="website"
+              type="text"
+              tabIndex={-1}
+              autoComplete="off"
             />
           </div>
 

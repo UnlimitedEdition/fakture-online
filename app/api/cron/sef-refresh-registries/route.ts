@@ -9,13 +9,14 @@ import {
   unwrapCompanies,
   normaliseCompany,
 } from "@/lib/sef/api/list-companies";
+import { safeEqual } from "@/lib/security/safe-equal";
 
 export const dynamic = "force-dynamic";
 
 function authOk(req: NextRequest): boolean {
   const expected = process.env.SEF_CRON_SECRET;
   if (!expected) return false;
-  return req.headers.get("x-cron-secret") === expected;
+  return safeEqual(req.headers.get("x-cron-secret"), expected);
 }
 
 function serviceClient() {
@@ -107,6 +108,15 @@ export async function GET(req: NextRequest) {
   const kjsUrl = process.env.KJS_REGISTRY_URL;
   if (kjsUrl) {
     try {
+      // SSRF defense: only allow https + .gov.rs hosts (KJS is government data)
+      const parsed = new URL(kjsUrl);
+      if (parsed.protocol !== "https:" || !parsed.hostname.endsWith(".gov.rs")) {
+        console.error("[cron.sef-refresh-registries.kjs]", {
+          message: "KJS_REGISTRY_URL must be https + .gov.rs host",
+          got: parsed.hostname,
+        });
+        throw new Error("invalid KJS_REGISTRY_URL");
+      }
       const r = await fetch(kjsUrl, { signal: AbortSignal.timeout(60_000) });
       if (r.ok) {
         const list = (await r.json()) as Array<Record<string, unknown>>;

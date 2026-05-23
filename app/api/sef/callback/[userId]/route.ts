@@ -5,6 +5,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { mapSefRemoteStatus } from "@/lib/sef/types";
+import { safeEqual } from "@/lib/security/safe-equal";
+import { checkRateLimit } from "@/lib/rate-limit";
+import { isUuid } from "@/lib/uuid";
 
 export const dynamic = "force-dynamic";
 
@@ -22,10 +25,25 @@ export async function POST(
   { params }: { params: Promise<{ userId: string }> },
 ) {
   const { userId } = await params;
+
+  // Validate userId is a UUID before any DB call (prevents enumeration via
+  // distinct error timings between "user exists" vs "syntactically invalid").
+  if (!isUuid(userId)) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+
+  // Rate-limit: 30 req/min per IP+userId (callback is a public endpoint with
+  // only header-secret as auth — must throttle to prevent brute-force).
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  const rl = await checkRateLimit("sefCallback", `${ip}:${userId}`);
+  if (!rl.allowed) {
+    return NextResponse.json({ error: "rate limited" }, { status: 429 });
+  }
+
   const providedSecret = req.headers.get("x-callback-secret") ?? "";
 
   if (!providedSecret || providedSecret.length < 32) {
-    return NextResponse.json({ error: "missing or invalid secret" }, { status: 401 });
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
   const svc = serviceClient();
@@ -36,7 +54,10 @@ export async function POST(
     .eq("id", userId)
     .maybeSingle();
 
-  if (!profile || profile.sef_callback_secret !== providedSecret) {
+  // Constant-time compare. If profile missing, still do a dummy compare against
+  // a fixed-length sentinel to mask the "profile exists" timing oracle.
+  const storedSecret = profile?.sef_callback_secret ?? "x".repeat(providedSecret.length);
+  if (!safeEqual(providedSecret, storedSecret) || !profile) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 

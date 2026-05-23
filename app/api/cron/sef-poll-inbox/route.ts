@@ -8,13 +8,14 @@ import { sefListInbox } from "@/lib/sef/api/inbox-list";
 import { sefGetInboxXml } from "@/lib/sef/api/inbox-get";
 import { parseInboxInvoice } from "@/lib/sef/ubl/parse/inbox-invoice";
 import { mapSefRemoteStatus } from "@/lib/sef/types";
+import { safeEqual } from "@/lib/security/safe-equal";
 
 export const dynamic = "force-dynamic";
 
 function authOk(req: NextRequest): boolean {
   const expected = process.env.SEF_CRON_SECRET;
   if (!expected) return false;
-  return req.headers.get("x-cron-secret") === expected;
+  return safeEqual(req.headers.get("x-cron-secret"), expected);
 }
 
 function serviceClient() {
