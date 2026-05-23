@@ -4,8 +4,6 @@ Online fakturisanje za freelancere, paušalce i male firme u Srbiji. Kreirajte
 profesionalnu fakturu za 30 sekundi, pošaljite je klijentu na email i pratite
 status naplate iz dashboarda.
 
-Live: _configure via deployment_
-
 ## Tech stack
 
 - **Next.js 16** (App Router, React Server Components, Server Actions, Turbopack)
@@ -13,6 +11,8 @@ Live: _configure via deployment_
 - **TypeScript** (strict)
 - **Tailwind CSS v4**
 - **Supabase** (Postgres + Auth + Row-Level Security, accessed via `@supabase/ssr`)
+  — runs in a **dedicated, single-tenant** project (not shared with any other app)
+- **Upstash Redis** (rate limiting)
 - **Resend** (transactional email)
 
 ## Project structure
@@ -28,11 +28,22 @@ app/
   page.tsx             Marketing landing page
 lib/
   admin.ts             Admin allow-list helper (env-configurable)
+  audit-log.ts         Audit trail helper (writes via fo_log_audit RPC)
+  html-escape.ts       HTML escape + email-header sanitizer
   invoice-status.ts    Shared invoice status config (labels + colors)
+  rate-limit.ts        Upstash-backed rate limiter (login/register/signup/email)
+  request-meta.ts      IP + User-Agent helper (read from request headers)
   supabase/client.ts   Browser Supabase client
-  supabase/server.ts   Server Supabase client (cookie-aware)
+  supabase/server.ts   Server Supabase client + requireUser() helper
   types.ts             Domain types (Profile, Client, Invoice, …)
-proxy.ts               Next.js proxy (auth-gated routing)
+migrations/
+  0001_initial_schema.sql      Tables, types, triggers, RLS enabled
+  0002_rls_policies.sql        RLS policies + grants
+  0003_functions.sql           RPCs (all use auth.uid(), never trust args)
+  0004_indexes.sql             Performance indexes
+scripts/
+  migrate-from-shared-db.ts    One-shot data import from old shared project
+proxy.ts                       Next.js proxy (auth-gated routing)
 ```
 
 Route groups `(auth)` and `(dashboard)` do not appear in the URL — they exist
@@ -43,7 +54,8 @@ only to share layouts.
 ### Prerequisites
 
 - Node.js 20+
-- Supabase project with the `fo_*` schema (see **Database** below)
+- A **fresh, dedicated** Supabase project for Fakture (do NOT reuse a shared one)
+- Upstash Redis (free tier is enough for low traffic)
 - Resend account (optional, only if you want to send invoice emails)
 
 ### 1. Install
@@ -52,7 +64,12 @@ only to share layouts.
 npm install
 ```
 
-### 2. Configure environment
+### 2. Apply migrations
+
+Open the SQL editor in your Supabase dashboard and run the files in
+`migrations/` in order. See `migrations/README.md`.
+
+### 3. Configure environment
 
 Copy `.env.example` to `.env.local` and fill in real values:
 
@@ -60,7 +77,7 @@ Copy `.env.example` to `.env.local` and fill in real values:
 cp .env.example .env.local
 ```
 
-### 3. Run
+### 4. Run
 
 ```bash
 npm run dev       # http://localhost:3000
@@ -69,33 +86,39 @@ npm run start     # run the production build
 npm run lint      # ESLint
 ```
 
+### 5. Grant yourself admin
+
+Either set `ADMIN_EMAILS=you@example.com` in `.env.local`, or after registering
+flip `is_admin = true` in `fo_profiles` for your row via the Supabase SQL editor.
+There is no hard-coded fallback admin in the source.
+
 ## Environment variables
 
 | Variable | Required | Purpose |
 |---|---|---|
 | `NEXT_PUBLIC_SUPABASE_URL` | yes | Supabase project URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | yes | Supabase anon key (RLS-protected) |
-| `SUPABASE_URL` | yes (API routes) | Same as above, server-only alias |
-| `SUPABASE_SERVICE_KEY` | yes (API routes) | Service role key — used by `/api/signup` to insert into `lead_signups` |
-| `RESEND_API_KEY` | optional | Enables email sending (invoices + lead notifications) |
+| `NEXT_PUBLIC_SITE_URL` | yes (prod) | Used to verify `Origin` on POST endpoints (CSRF defense) |
+| `RESEND_API_KEY` | optional | Enables email sending |
 | `NOTIFICATION_EMAIL` | optional | Inbox that receives new-lead notifications |
-| `ADMIN_EMAILS` | optional | Comma-separated emails granted admin access |
+| `ADMIN_EMAILS` | optional | Comma-separated emails granted admin; preferred is `fo_profiles.is_admin` |
+| `UPSTASH_REDIS_REST_URL` | yes (prod) | Upstash Redis URL for rate limiting |
+| `UPSTASH_REDIS_REST_TOKEN` | yes (prod) | Upstash Redis token |
+
+The app **no longer uses** `SUPABASE_SERVICE_KEY`. Lead capture inserts via the
+anon client, gated by an INSERT-only RLS policy on `lead_signups`.
 
 ## Database
 
-The app expects a Supabase schema with these tables and functions:
+The schema and policies are defined in `migrations/`. Key properties:
 
-- `fo_profiles` — user profile (company info used on invoices)
-- `fo_clients` — user's client directory
-- `fo_invoices` — invoices with status, amounts, dates
-- `fo_invoice_items` — line items
-- `lead_signups` — landing-page lead captures
-- RPC `fo_get_profile(p_user_id uuid)` — SECURITY DEFINER profile fetch
-- RPC `fo_get_next_invoice_number(p_user_id uuid)` — sequential invoice numbering
-- RPC `fo_admin_stats(p_user_id uuid)` — admin panel aggregates
-
-All `fo_*` tables are expected to enforce RLS so users can only access their own
-rows. Server Actions additionally scope every mutation by `user_id`.
+- All `fo_*` tables enforce RLS scoped by `auth.uid() = user_id`.
+- All SECURITY DEFINER RPCs use `auth.uid()` internally and never accept a
+  caller-supplied user UUID.
+- `fo_create_invoice` / `fo_update_invoice` are atomic — no orphan invoices,
+  no items left out of sync.
+- `fo_audit_log` records logins, mutations, admin access (with IP + UA).
+- `fo_subscriptions` / `fo_payments` scaffold for local Serbian processor.
 
 ## Authentication
 
@@ -103,9 +126,31 @@ rows. Server Actions additionally scope every mutation by `user_id`.
 - Session cookies are refreshed by `proxy.ts` on every request to gated paths.
 - Protected routes (redirect to `/login` when signed out): `/dashboard`,
   `/fakture`, `/klijenti`, `/podesavanja`, `/admin`.
-- Admin access: `lib/admin.ts` uses `ADMIN_EMAILS` env var, with fallback to a
-  single hard-coded owner for bootstrap; profile column `is_admin` also grants
-  access.
+- Admin access: `lib/admin.ts` reads `ADMIN_EMAILS` env or `fo_profiles.is_admin`.
+
+## Rate limiting
+
+Limits per identifier per window (configured in `lib/rate-limit.ts`):
+
+- `login` — 5 per 15 min, per IP and per email
+- `register` — 3 per hour per IP
+- `signup` (landing form) — 5 per hour per IP
+- `email` (invoice email) — 20 per hour per user
+
+When Upstash env vars are missing, the limiter fails open (suitable for local
+dev; configure Upstash in production).
+
+## Audit log
+
+Recorded via `fo_log_audit()` RPC. Visible to admins via `fo_admin_audit()`.
+Tracks login success/failure (with hashed email), register, logout, admin
+panel access (and denied attempts), invoice/client/profile mutations, email
+sends, and landing-form submissions — each with IP + user-agent.
+
+## Migrating from the old shared project
+
+If you previously ran Fakture on a Supabase project shared with another app,
+see `scripts/migrate-from-shared-db.ts` for a one-shot data copy.
 
 ## Scripts
 
@@ -114,13 +159,13 @@ rows. Server Actions additionally scope every mutation by `user_id`.
 | `npm run dev` | Next dev server |
 | `npm run build` | Production build |
 | `npm run start` | Serve the production build |
-| `npm run lint` | ESLint (`next/core-web-vitals` + `next/typescript`) |
+| `npm run lint` | ESLint |
+| `npm run migrate-data` | Copy fo_* data from old shared DB → new DB (see script header) |
 
 ## Deployment
 
-Any Next.js-compatible platform (Vercel, self-hosted Node) works. Set the
-environment variables listed above and Supabase schema must be provisioned in
-advance.
+Any Next.js-compatible platform (Vercel, self-hosted Node) works. Set the env
+vars above and ensure migrations have been applied.
 
 ## License
 

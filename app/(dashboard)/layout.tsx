@@ -1,5 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
+import { requireUser } from "@/lib/supabase/server";
 import { isAdmin } from "@/lib/admin";
 import { SidebarNav } from "./sidebar-nav";
 
@@ -8,23 +7,16 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { supabase, user } = await requireUser();
 
-  if (!user) redirect("/login");
-
-  const { data: profile } = await supabase.rpc("fo_get_profile", {
-    p_user_id: user.id,
-  });
-
-  if (!profile) {
-    await supabase.from("fo_profiles").upsert({
-      id: user.id,
-      email: user.email ?? "",
-      owner_name:
-        user.user_metadata?.full_name || user.user_metadata?.name || "",
+  // Profile + trial subscription are auto-created by the fo_on_auth_user_created
+  // trigger, so this RPC normally returns a row immediately after signup.
+  const { data: profile, error } = await supabase.rpc("fo_get_profile");
+  if (error) {
+    console.error("[layout.profile]", {
+      user_id: user.id,
+      code: error.code,
+      message: error.message,
     });
   }
 

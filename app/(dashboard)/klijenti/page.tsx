@@ -1,19 +1,22 @@
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
+import { requireUser } from "@/lib/supabase/server";
 import Link from "next/link";
 
 export default async function KlijentiPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const { supabase, user } = await requireUser();
 
-  const { data: clients } = await supabase
+  const { data: clients, error } = await supabase
     .from("fo_clients")
     .select("*")
     .eq("user_id", user.id)
     .order("company_name");
+
+  if (error) {
+    console.error("[klijenti.list]", {
+      user_id: user.id,
+      code: error.code,
+      message: error.message,
+    });
+  }
 
   const list = clients || [];
 

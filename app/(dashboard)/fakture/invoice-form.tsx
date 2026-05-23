@@ -114,7 +114,10 @@ export function InvoiceForm({
         setSaving(false);
       }
       // redirect happens in the server action
-    } catch {
+    } catch (err) {
+      // Re-throw Next.js navigation errors so the framework can handle them.
+      if (err && typeof err === "object" && "digest" in err) throw err;
+      setError("Greška pri čuvanju fakture.");
       setSaving(false);
     }
   };

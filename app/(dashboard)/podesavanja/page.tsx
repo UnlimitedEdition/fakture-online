@@ -1,20 +1,17 @@
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
-import type { Profile } from "@/lib/types";
+import { requireUser } from "@/lib/supabase/server";
 import { ProfileForm } from "./profile-form";
 
 export default async function PodesavanjaPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const { supabase, user } = await requireUser();
 
-  const { data: profile } = await supabase
-    .from("fo_profiles")
-    .select("*")
-    .eq("id", user.id)
-    .single<Profile>();
+  const { data: profile, error } = await supabase.rpc("fo_get_profile");
+  if (error) {
+    console.error("[podesavanja.profile]", {
+      user_id: user.id,
+      code: error.code,
+      message: error.message,
+    });
+  }
 
   return (
     <div className="space-y-6">
@@ -25,7 +22,7 @@ export default async function PodesavanjaPage() {
         </p>
       </div>
 
-      <ProfileForm profile={profile} />
+      <ProfileForm profile={profile} accountEmail={user.email ?? ""} />
     </div>
   );
 }

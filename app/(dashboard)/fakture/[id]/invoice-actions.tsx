@@ -32,14 +32,31 @@ export function InvoiceActions({
   const handleDelete = async () => {
     if (!confirm("Da li ste sigurni da želite da obrišete ovu fakturu?")) return;
     setLoading("delete");
-    await deleteInvoice(invoiceId);
+    try {
+      const result = (await deleteInvoice(invoiceId)) as
+        | { error?: string }
+        | undefined;
+      if (result?.error) {
+        alert(result.error);
+        setLoading("");
+      }
+    } catch (err) {
+      if (err && typeof err === "object" && "digest" in err) throw err;
+      alert("Greška pri brisanju.");
+      setLoading("");
+    }
   };
 
   const handleSendEmail = async () => {
     setLoading("email");
-    const result = await sendInvoiceEmail(invoiceId);
+    const result = (await sendInvoiceEmail(invoiceId)) as {
+      success?: boolean;
+      warning?: string;
+      error?: string;
+    };
     if (result?.error) alert(result.error);
-    if (result?.success) alert("Email je poslat klijentu.");
+    else if (result?.warning) alert(result.warning);
+    else if (result?.success) alert("Email je poslat klijentu.");
     setLoading("");
     router.refresh();
   };

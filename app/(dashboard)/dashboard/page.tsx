@@ -1,14 +1,9 @@
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
+import { requireUser } from "@/lib/supabase/server";
 import Link from "next/link";
 import { getInvoiceStatus } from "@/lib/invoice-status";
 
 export default async function DashboardPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const { supabase, user } = await requireUser();
 
   const [invoicesRes, clientsRes, recentRes] = await Promise.all([
     supabase.from("fo_invoices").select("status, total").eq("user_id", user.id),
@@ -23,6 +18,15 @@ export default async function DashboardPage() {
       .order("created_at", { ascending: false })
       .limit(5),
   ]);
+
+  if (invoicesRes.error || clientsRes.error || recentRes.error) {
+    console.error("[dashboard.fetch]", {
+      user_id: user.id,
+      invoices: invoicesRes.error?.code,
+      clients: clientsRes.error?.code,
+      recent: recentRes.error?.code,
+    });
+  }
 
   const invoices = invoicesRes.data || [];
   const totalClients = clientsRes.count || 0;

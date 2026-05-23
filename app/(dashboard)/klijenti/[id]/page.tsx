@@ -1,14 +1,10 @@
-import { createClient } from "@/lib/supabase/server";
-import { redirect, notFound } from "next/navigation";
+import { requireUser } from "@/lib/supabase/server";
+import { notFound } from "next/navigation";
 import { ClientDetail } from "./client-detail";
 
 export default async function KlijentPage(props: { params: Promise<{ id: string }> }) {
   const { id } = await props.params;
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const { supabase, user } = await requireUser();
 
   const [clientRes, invoicesRes] = await Promise.all([
     supabase
@@ -25,7 +21,17 @@ export default async function KlijentPage(props: { params: Promise<{ id: string 
       .order("created_at", { ascending: false }),
   ]);
 
-  if (!clientRes.data) notFound();
+  if (clientRes.error || !clientRes.data) {
+    if (clientRes.error?.code !== "PGRST116") {
+      console.error("[klijenti.detail]", {
+        user_id: user.id,
+        client_id: id,
+        code: clientRes.error?.code,
+        message: clientRes.error?.message,
+      });
+    }
+    notFound();
+  }
 
   return (
     <ClientDetail

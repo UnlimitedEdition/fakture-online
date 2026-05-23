@@ -1,40 +1,52 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { logAudit } from "@/lib/audit-log";
 
 export async function updateProfile(
   _prevState: { error?: string; success?: boolean } | null,
-  formData: FormData
+  formData: FormData,
 ) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    return { error: "Niste prijavljeni." };
-  }
+  const { supabase, user } = await requireUser();
 
-  const { error } = await supabase
+  // NOTE: `email` and `is_admin` are deliberately NOT writable from the form.
+  // Email is authoritative in auth.users; is_admin is granted by an admin.
+  const { error, count } = await supabase
     .from("fo_profiles")
-    .update({
-      company_name: (formData.get("company_name") as string) || "",
-      owner_name: (formData.get("owner_name") as string) || "",
-      pib: (formData.get("pib") as string) || "",
-      maticni_broj: (formData.get("maticni_broj") as string) || "",
-      address: (formData.get("address") as string) || "",
-      city: (formData.get("city") as string) || "",
-      zip_code: (formData.get("zip_code") as string) || "",
-      phone: (formData.get("phone") as string) || "",
-      email: (formData.get("email") as string) || "",
-      bank_account: (formData.get("bank_account") as string) || "",
-      invoice_prefix: (formData.get("invoice_prefix") as string) || "FAK",
-    })
+    .update(
+      {
+        company_name: (formData.get("company_name") as string) || "",
+        owner_name: (formData.get("owner_name") as string) || "",
+        pib: (formData.get("pib") as string) || "",
+        maticni_broj: (formData.get("maticni_broj") as string) || "",
+        address: (formData.get("address") as string) || "",
+        city: (formData.get("city") as string) || "",
+        zip_code: (formData.get("zip_code") as string) || "",
+        phone: (formData.get("phone") as string) || "",
+        bank_account: (formData.get("bank_account") as string) || "",
+        invoice_prefix:
+          (formData.get("invoice_prefix") as string)?.trim() || "FAK",
+      },
+      { count: "exact" },
+    )
     .eq("id", user.id);
 
-  if (error) {
+  if (error || count === 0) {
+    console.error("[settings.update]", {
+      user_id: user.id,
+      code: error?.code,
+      message: error?.message,
+    });
+    await logAudit({ action: "profile.updated", success: false });
     return { error: "Greška pri čuvanju podešavanja." };
   }
+
+  await logAudit({
+    action: "profile.updated",
+    resourceType: "profile",
+    resourceId: user.id,
+  });
 
   revalidatePath("/podesavanja");
   revalidatePath("/fakture");

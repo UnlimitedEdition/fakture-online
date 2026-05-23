@@ -1,20 +1,23 @@
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
+import { requireUser } from "@/lib/supabase/server";
 import Link from "next/link";
 import { getInvoiceStatus } from "@/lib/invoice-status";
 
 export default async function FakturePage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const { supabase, user } = await requireUser();
 
-  const { data: invoices } = await supabase
+  const { data: invoices, error } = await supabase
     .from("fo_invoices")
     .select("*, client:fo_clients(company_name)")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("[fakture.list]", {
+      user_id: user.id,
+      code: error.code,
+      message: error.message,
+    });
+  }
 
   const list = invoices || [];
 
@@ -24,7 +27,7 @@ export default async function FakturePage() {
         <div>
           <h1 className="text-2xl font-bold text-slate-800">Fakture</h1>
           <p className="text-slate-500 text-sm mt-1">
-            {list.length} {list.length === 1 ? "faktura" : "faktura"}
+            {list.length} {list.length === 1 ? "faktura" : "faktura ukupno"}
           </p>
         </div>
         <Link

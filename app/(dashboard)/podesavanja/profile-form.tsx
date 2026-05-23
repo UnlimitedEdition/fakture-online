@@ -31,7 +31,13 @@ function Field({ id, label, type = "text", placeholder, defaultValue, colSpan }:
   );
 }
 
-export function ProfileForm({ profile }: { profile: Profile | null }) {
+export function ProfileForm({
+  profile,
+  accountEmail,
+}: {
+  profile: Profile | null;
+  accountEmail: string;
+}) {
   const [state, action, pending] = useActionState(updateProfile, null);
 
   return (
@@ -64,13 +70,20 @@ export function ProfileForm({ profile }: { profile: Profile | null }) {
           placeholder="Marko Marković"
           defaultValue={profile?.owner_name}
         />
-        <Field
-          id="email"
-          label="Email"
-          type="email"
-          placeholder="firma@email.com"
-          defaultValue={profile?.email}
-        />
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">
+            Email naloga
+          </label>
+          <input
+            type="email"
+            value={accountEmail}
+            disabled
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-slate-500 outline-none"
+          />
+          <p className="text-xs text-slate-400 mt-1">
+            Email se menja u podešavanjima naloga.
+          </p>
+        </div>
         <Field id="pib" label="PIB" placeholder="123456789" defaultValue={profile?.pib} />
         <Field
           id="maticni_broj"

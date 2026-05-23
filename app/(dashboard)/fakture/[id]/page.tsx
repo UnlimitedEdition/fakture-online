@@ -1,37 +1,42 @@
-import { createClient } from "@/lib/supabase/server";
-import { redirect, notFound } from "next/navigation";
+import { requireUser } from "@/lib/supabase/server";
+import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getInvoiceStatus } from "@/lib/invoice-status";
 import { InvoiceActions } from "./invoice-actions";
 
 export default async function FakturaDetailPage(props: { params: Promise<{ id: string }> }) {
   const { id } = await props.params;
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const { supabase, user } = await requireUser();
 
-  const { data: invoice } = await supabase
-    .from("fo_invoices")
-    .select("*, client:fo_clients(*)")
-    .eq("id", id)
-    .eq("user_id", user.id)
-    .single();
+  const [invoiceRes, itemsRes, profileRes] = await Promise.all([
+    supabase
+      .from("fo_invoices")
+      .select("*, client:fo_clients(*)")
+      .eq("id", id)
+      .eq("user_id", user.id)
+      .single(),
+    supabase
+      .from("fo_invoice_items")
+      .select("*")
+      .eq("invoice_id", id)
+      .order("sort_order"),
+    supabase.rpc("fo_get_profile"),
+  ]);
 
-  if (!invoice) notFound();
-
-  const { data: items } = await supabase
-    .from("fo_invoice_items")
-    .select("*")
-    .eq("invoice_id", id)
-    .order("sort_order");
-
-  const { data: profile } = await supabase
-    .from("fo_profiles")
-    .select("*")
-    .eq("id", user.id)
-    .single();
+  if (invoiceRes.error || !invoiceRes.data) {
+    if (invoiceRes.error?.code !== "PGRST116") {
+      console.error("[fakture.detail]", {
+        user_id: user.id,
+        invoice_id: id,
+        code: invoiceRes.error?.code,
+        message: invoiceRes.error?.message,
+      });
+    }
+    notFound();
+  }
+  const invoice = invoiceRes.data;
+  const items = itemsRes.data;
+  const profile = profileRes.data;
 
   const s = getInvoiceStatus(invoice.status);
 

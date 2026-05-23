@@ -1,14 +1,10 @@
-import { createClient } from "@/lib/supabase/server";
-import { redirect, notFound } from "next/navigation";
+import { requireUser } from "@/lib/supabase/server";
+import { notFound } from "next/navigation";
 import { InvoiceForm } from "../../invoice-form";
 
 export default async function IzmeniFakturuPage(props: { params: Promise<{ id: string }> }) {
   const { id } = await props.params;
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const { supabase, user } = await requireUser();
 
   const [invoiceRes, itemsRes, clientsRes] = await Promise.all([
     supabase
@@ -29,7 +25,17 @@ export default async function IzmeniFakturuPage(props: { params: Promise<{ id: s
       .order("company_name"),
   ]);
 
-  if (!invoiceRes.data) notFound();
+  if (invoiceRes.error || !invoiceRes.data) {
+    if (invoiceRes.error?.code !== "PGRST116") {
+      console.error("[fakture.izmeni]", {
+        user_id: user.id,
+        invoice_id: id,
+        code: invoiceRes.error?.code,
+        message: invoiceRes.error?.message,
+      });
+    }
+    notFound();
+  }
   const invoice = invoiceRes.data;
 
   return (
