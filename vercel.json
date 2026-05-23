@@ -1,17 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "crons": [
-    {
-      "path": "/api/cron/sef-poll-status",
-      "schedule": "0 6 * * *"
-    },
-    {
-      "path": "/api/cron/sef-poll-inbox",
-      "schedule": "0 7 * * *"
-    },
-    {
-      "path": "/api/cron/sef-refresh-registries",
-      "schedule": "0 3 * * *"
-    }
+    { "path": "/api/cron/retention-purge", "schedule": "0 2 * * *" },
+    { "path": "/api/cron/sef-refresh-registries", "schedule": "0 3 * * *" },
+    { "path": "/api/cron/sef-poll-status", "schedule": "0 6 * * *" },
+    { "path": "/api/cron/sef-poll-inbox", "schedule": "0 7 * * *" }
   ]
 }
