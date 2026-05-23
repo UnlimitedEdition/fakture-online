@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@konfirm/iso7064": "^2.1.3",
+    "@react-pdf/renderer": "^4.5.1",
     "@supabase/ssr": "^0.10.0",
     "@supabase/supabase-js": "^2.101.1",
     "@types/qrcode": "^1.5.6",
