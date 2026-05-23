@@ -27,6 +27,7 @@ const limiters = {
   passwordReset: build("pwreset", 3, 3600),       // 3 / hour
   invoiceMutate: build("inv.mutate", 60, 3600),   // 60 / hour
   bulk: build("bulk", 10, 60),                    // 10 / minute (bulk operations)
+  errorReport: build("err.report", 30, 60),       // 30 / minute (client-side error sink)
   sefSend: build("sef.send", 30, 3600),           // 30 / hour
   sefPoll: build("sef.poll", 60, 3600),           // 60 / hour
   sefCallback: build("sef.cb", 30, 60),           // 30 / minute (per IP+userId)

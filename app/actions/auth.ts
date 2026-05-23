@@ -275,12 +275,16 @@ export async function changePassword(
 // Cryptographic pseudonymization for audit-log correlation without storing
 // the email. HMAC-SHA-256 keyed by AUDIT_EMAIL_HMAC_KEY (server-only). Output
 // is non-reversible without the key.
+//
+// Fail-soft: if the key is missing in production we still want login to work.
+// The audit row gets a placeholder hash so the event is still recorded; an
+// operator alert is emitted via console for ops to act on.
 function hashEmail(email: string): string {
   const key = process.env.AUDIT_EMAIL_HMAC_KEY;
   if (!key) {
-    // Fail-closed in production; in dev we still want logs to work.
     if (process.env.NODE_ENV === "production") {
-      throw new Error("AUDIT_EMAIL_HMAC_KEY required in production");
+      console.error("[auth.hashEmail] AUDIT_EMAIL_HMAC_KEY missing — using degraded placeholder");
+      return "e:unkeyed";
     }
     return "e:dev";
   }
