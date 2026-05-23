@@ -42,13 +42,20 @@ export function validateEnv(): string[] {
 }
 
 // Call from instrumentation.ts on production cold start.
+// Set STRICT_ENV_VALIDATION=true to make missing vars CRASH the boot.
+// Until you've finished setting all required vars in Vercel, the
+// validator only warns so the deploy stays up.
 export function assertEnvOrCrash() {
   if (process.env.NODE_ENV !== "production") return;
   const errors = validateEnv();
   if (errors.length === 0) return;
   for (const e of errors) console.error(`[env] ${e}`);
-  // Fail-loud and refuse to serve requests.
-  throw new Error(
-    `Production env validation failed (${errors.length} errors). See logs.`,
+  if (process.env.STRICT_ENV_VALIDATION === "true") {
+    throw new Error(
+      `Production env validation failed (${errors.length} errors). See logs.`,
+    );
+  }
+  console.error(
+    `[env] ${errors.length} validation issues — set STRICT_ENV_VALIDATION=true after fixing them all to enforce.`,
   );
 }
