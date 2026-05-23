@@ -74,6 +74,14 @@ export function InvoiceForm({
   const taxAmount = Math.round(subtotal * taxRate) / 100;
   const total = subtotal + taxAmount;
 
+  // Warnings — surface SEF rejection traps BEFORE the user clicks Save.
+  const today = new Date().toISOString().split("T")[0];
+  const issueDateIsToday = issueDate === today;
+  const issueYear = issueDate?.slice(0, 4);
+  const currentYear = new Date().getFullYear().toString();
+  const yearMismatch = issueYear && issueYear !== currentYear;
+  const dueBeforeIssue = dueDate && issueDate && dueDate < issueDate;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -127,6 +135,30 @@ export function InvoiceForm({
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
           {error}
+        </div>
+      )}
+
+      {/* SEF rejection-trap warnings — surface before the user wastes time */}
+      {(!issueDateIsToday || yearMismatch || dueBeforeIssue) && (
+        <div className="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-xl text-sm space-y-1">
+          <p className="font-semibold">⚠️ Pažnja pre slanja na SEF:</p>
+          <ul className="list-disc list-inside text-xs">
+            {!issueDateIsToday && (
+              <li>
+                Datum izdavanja nije današnji ({today}). SEF odbija back-dated fakture
+                — ako šaljete na SEF, postavite današnji datum.
+              </li>
+            )}
+            {yearMismatch && (
+              <li>
+                Godina iz datuma izdavanja ({issueYear}) ≠ trenutne ({currentYear}).
+                Broj fakture mora biti jedinstven uz godinu (npr. <code>FAK-{currentYear}-0001</code>).
+              </li>
+            )}
+            {dueBeforeIssue && (
+              <li>Rok plaćanja ({dueDate}) je pre datuma izdavanja — verovatno greška.</li>
+            )}
+          </ul>
         </div>
       )}
 

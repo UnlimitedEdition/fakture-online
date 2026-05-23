@@ -2,6 +2,7 @@ import { requireUser } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getInvoiceStatus } from "@/lib/invoice-status";
+import { getOwnLogoUrl } from "@/app/actions/profile-logo";
 import { InvoiceActions } from "./invoice-actions";
 
 export default async function FakturaDetailPage(props: { params: Promise<{ id: string }> }) {
@@ -60,6 +61,7 @@ export default async function FakturaDetailPage(props: { params: Promise<{ id: s
   const invoice = invoiceRes.data;
   const items = itemsRes.data ?? [];
   const profile = profileRes.data;
+  const logoUrl = await getOwnLogoUrl();
 
   const s = getInvoiceStatus(invoice.status);
 
@@ -90,7 +92,21 @@ export default async function FakturaDetailPage(props: { params: Promise<{ id: s
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:justify-between gap-6 mb-8 pb-8 border-b border-gray-100">
           <div>
-            <h2 className="text-xl font-bold text-teal-700">{profile?.company_name || "FaktureOnline"}</h2>
+            {logoUrl ? (
+              <>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={logoUrl}
+                  alt={profile?.company_name || "Logo"}
+                  className="h-16 w-auto max-w-[220px] object-contain mb-2"
+                />
+                {profile?.company_name && (
+                  <p className="text-sm font-semibold text-slate-700">{profile.company_name}</p>
+                )}
+              </>
+            ) : (
+              <h2 className="text-xl font-bold text-teal-700">{profile?.company_name || "FaktureOnline"}</h2>
+            )}
             {profile?.address && <p className="text-sm text-slate-500">{profile.address}</p>}
             {profile?.city && (
               <p className="text-sm text-slate-500">
@@ -213,6 +229,32 @@ export default async function FakturaDetailPage(props: { params: Promise<{ id: s
           <div className="mt-4">
             <p className="text-xs text-slate-400 uppercase tracking-wider mb-1">Način plaćanja</p>
             <p className="text-sm text-slate-600">{invoice.payment_method}</p>
+          </div>
+        )}
+
+        {/* IPS NBS QR — scan with mobile banking app to pay */}
+        {profile?.bank_account && invoice.status !== "paid" && invoice.status !== "cancelled" && (
+          <div className="mt-8 pt-6 border-t border-gray-100 flex flex-col sm:flex-row items-start gap-6 print:flex-row">
+            <div className="bg-white p-2 rounded-lg border border-gray-200">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={`/api/invoices/${id}/ips-qr.png`}
+                alt="IPS QR za plaćanje"
+                width={160}
+                height={160}
+                className="block"
+              />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-slate-800 mb-1">IPS QR za plaćanje</p>
+              <p className="text-xs text-slate-500 mb-2">
+                Skenirajte ovaj kod sa mobilnim bankarstvom — sve polja se automatski popunjavaju
+                (primalac, račun, iznos, poziv na broj).
+              </p>
+              <p className="text-xs text-slate-400">
+                Standard: NBS IPS (sve banke u Srbiji)
+              </p>
+            </div>
           </div>
         )}
       </div>

@@ -1,5 +1,7 @@
 import { requireUser } from "@/lib/supabase/server";
 import { ProfileForm } from "./profile-form";
+import { LogoForm } from "./logo-form";
+import { getOwnLogoUrl } from "@/app/actions/profile-logo";
 
 export default async function PodesavanjaPage() {
   const { supabase, user } = await requireUser();
@@ -23,6 +25,8 @@ export default async function PodesavanjaPage() {
       </div>
 
       <ProfileForm profile={profile} accountEmail={user.email ?? ""} />
+
+      <LogoForm currentLogoUrl={await getOwnLogoUrl()} />
 
       <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-3">
         <h2 className="font-semibold text-slate-800">Dodatna podešavanja</h2>
