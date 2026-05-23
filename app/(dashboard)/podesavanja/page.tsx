@@ -23,6 +23,19 @@ export default async function PodesavanjaPage() {
       </div>
 
       <ProfileForm profile={profile} accountEmail={user.email ?? ""} />
+
+      <div className="bg-white rounded-2xl border border-gray-100 p-6">
+        <h2 className="font-semibold text-slate-800 mb-1">Dodatna podešavanja</h2>
+        <p className="text-slate-500 text-sm mb-4">
+          E-fakture, integracije i napredne opcije.
+        </p>
+        <a
+          href="/podesavanja/sef"
+          className="inline-flex items-center gap-2 text-sm font-medium text-teal-600 hover:text-teal-700"
+        >
+          SEF integracija (Sistem Elektronskih Faktura) &rarr;
+        </a>
+      </div>
     </div>
   );
 }

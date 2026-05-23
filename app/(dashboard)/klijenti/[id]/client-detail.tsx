@@ -1,11 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { useActionState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { updateClientAction, deleteClient } from "@/app/actions/clients";
+import { checkClientSefEligibility } from "@/app/actions/sef";
 import { getInvoiceStatus } from "@/lib/invoice-status";
 import type { Client } from "@/lib/types";
+
+interface SefExtra {
+  sef_registered: boolean | null;
+  sef_last_checked_at: string | null;
+  is_budget_user: boolean;
+  jbkjs: string | null;
+  is_foreign: boolean;
+  country_code: string;
+}
 
 interface InvoiceRow {
   id: string;
@@ -19,12 +30,19 @@ interface InvoiceRow {
 export function ClientDetail({
   client,
   invoices,
+  sef,
+  sefEnabled,
 }: {
   client: Client;
   invoices: InvoiceRow[];
+  sef: SefExtra;
+  sefEnabled: boolean;
 }) {
+  const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [checkingSef, startCheckSef] = useTransition();
+  const [sefMessage, setSefMessage] = useState<string | null>(null);
 
   const boundUpdate = updateClientAction.bind(null, client.id);
   const [state, action, pending] = useActionState(boundUpdate, null);
@@ -38,6 +56,23 @@ export function ClientDetail({
       alert(result.error);
       setDeleting(false);
     }
+  };
+
+  const handleCheckSef = () => {
+    setSefMessage(null);
+    startCheckSef(async () => {
+      const res = await checkClientSefEligibility(client.id);
+      if ("error" in res && res.error) {
+        setSefMessage(res.error);
+      } else if ("registered" in res) {
+        setSefMessage(
+          res.registered
+            ? "Klijent je registrovan na SEF-u."
+            : "Klijent NIJE registrovan na SEF-u — ne možete mu poslati elektronsku fakturu.",
+        );
+        router.refresh();
+      }
+    });
   };
 
   return (
@@ -110,6 +145,27 @@ export function ClientDetail({
               <label htmlFor="zip_code" className="block text-sm font-medium text-slate-700 mb-1">Poštanski broj</label>
               <input id="zip_code" name="zip_code" type="text" defaultValue={client.zip_code} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none text-slate-800" />
             </div>
+            <div className="sm:col-span-2 border-t border-gray-100 pt-4">
+              <h3 className="text-sm font-semibold text-slate-700 mb-3">SEF i strani klijenti</h3>
+              <div className="space-y-3">
+                <label className="flex items-center gap-3 text-sm text-slate-700">
+                  <input type="checkbox" name="is_budget_user" value="true" defaultChecked={sef.is_budget_user} className="w-4 h-4 rounded border-gray-300" />
+                  Budžetski korisnik (B2G)
+                </label>
+                <div>
+                  <label htmlFor="jbkjs" className="block text-sm font-medium text-slate-700 mb-1">JBKJS</label>
+                  <input id="jbkjs" name="jbkjs" type="text" defaultValue={sef.jbkjs ?? ""} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 outline-none text-slate-800 font-mono text-sm" />
+                </div>
+                <label className="flex items-center gap-3 text-sm text-slate-700">
+                  <input type="checkbox" name="is_foreign" value="true" defaultChecked={sef.is_foreign} className="w-4 h-4 rounded border-gray-300" />
+                  Strana firma (izvoz)
+                </label>
+                <div>
+                  <label htmlFor="country_code" className="block text-sm font-medium text-slate-700 mb-1">Država (ISO 2-slova)</label>
+                  <input id="country_code" name="country_code" type="text" defaultValue={sef.country_code || "RS"} maxLength={2} className="w-24 px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 outline-none text-slate-800 font-mono text-sm uppercase" />
+                </div>
+              </div>
+            </div>
             <div className="sm:col-span-2">
               <label htmlFor="notes" className="block text-sm font-medium text-slate-700 mb-1">Beleška</label>
               <textarea id="notes" name="notes" rows={2} defaultValue={client.notes} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none text-slate-800 resize-none" />
@@ -120,21 +176,66 @@ export function ClientDetail({
           </button>
         </form>
       ) : (
-        <div className="bg-white rounded-2xl border border-gray-100 p-6 md:p-8">
-          <div className="grid gap-4 sm:grid-cols-2">
-            {client.email && <Info label="Email" value={client.email} />}
-            {client.phone && <Info label="Telefon" value={client.phone} />}
-            {client.pib && <Info label="PIB" value={client.pib} />}
-            {client.maticni_broj && <Info label="Matični broj" value={client.maticni_broj} />}
-            {client.address && <Info label="Adresa" value={client.address} />}
-            {client.city && <Info label="Grad" value={`${client.zip_code ? client.zip_code + " " : ""}${client.city}`} />}
-            {client.notes && (
-              <div className="sm:col-span-2">
-                <Info label="Beleška" value={client.notes} />
-              </div>
-            )}
+        <>
+          <div className="bg-white rounded-2xl border border-gray-100 p-6 md:p-8">
+            <div className="grid gap-4 sm:grid-cols-2">
+              {client.email && <Info label="Email" value={client.email} />}
+              {client.phone && <Info label="Telefon" value={client.phone} />}
+              {client.pib && <Info label="PIB" value={client.pib} />}
+              {client.maticni_broj && <Info label="Matični broj" value={client.maticni_broj} />}
+              {client.address && <Info label="Adresa" value={client.address} />}
+              {client.city && <Info label="Grad" value={`${client.zip_code ? client.zip_code + " " : ""}${client.city}`} />}
+              {sef.country_code && sef.country_code !== "RS" && (
+                <Info label="Država" value={sef.country_code} />
+              )}
+              {sef.is_budget_user && sef.jbkjs && (
+                <Info label="JBKJS" value={sef.jbkjs} />
+              )}
+              {client.notes && (
+                <div className="sm:col-span-2">
+                  <Info label="Beleška" value={client.notes} />
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+
+          {sefEnabled && client.pib && !sef.is_foreign && (
+            <div className="bg-white rounded-2xl border border-gray-100 p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div>
+                  <h3 className="font-semibold text-slate-800 mb-1">SEF registracija</h3>
+                  {sef.sef_registered === null ? (
+                    <p className="text-sm text-slate-500">Nije provereno.</p>
+                  ) : sef.sef_registered ? (
+                    <p className="text-sm text-emerald-700">
+                      ✓ Klijent je registrovan na SEF-u
+                      {sef.sef_last_checked_at && (
+                        <span className="text-slate-400 ml-1">
+                          (provereno {new Date(sef.sef_last_checked_at).toLocaleDateString("sr-RS")})
+                        </span>
+                      )}
+                    </p>
+                  ) : (
+                    <p className="text-sm text-red-600">
+                      ✗ Klijent NIJE registrovan na SEF-u
+                    </p>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={handleCheckSef}
+                  disabled={checkingSef}
+                  className="text-sm font-medium px-4 py-2 rounded-xl bg-teal-50 hover:bg-teal-100 text-teal-700 transition-colors disabled:opacity-50"
+                >
+                  {checkingSef ? "..." : "Proveri sada"}
+                </button>
+              </div>
+              {sefMessage && (
+                <p className="mt-3 text-xs text-slate-600">{sefMessage}</p>
+              )}
+            </div>
+          )}
+        </>
       )}
 
       {/* Client invoices */}
