@@ -2,6 +2,7 @@ import { requireUser } from "@/lib/supabase/server";
 import { isAdmin } from "@/lib/admin";
 import { SidebarNav } from "./sidebar-nav";
 import { ServiceWorkerRegister } from "./service-worker-register";
+import { InstallPrompt } from "./install-prompt";
 
 export default async function DashboardLayout({
   children,
@@ -35,6 +36,7 @@ export default async function DashboardLayout({
         <div className="p-4 md:p-8 max-w-7xl mx-auto">{children}</div>
       </main>
       <ServiceWorkerRegister />
+      <InstallPrompt />
     </div>
   );
 }

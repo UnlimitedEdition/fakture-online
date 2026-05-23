@@ -276,7 +276,7 @@ export function InvoiceForm({
                   type="text"
                   value={item.description}
                   onChange={(e) => updateItem(index, "description", e.target.value)}
-                  className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none text-sm text-slate-800"
+                  className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none text-base sm:text-sm text-slate-800"
                   placeholder="Usluga/proizvod"
                 />
               </div>
@@ -284,11 +284,12 @@ export function InvoiceForm({
                 <label className="block text-xs font-medium text-slate-500 mb-1">Kol.</label>
                 <input
                   type="number"
+                  inputMode="numeric"
                   min={0.01}
                   step={0.01}
                   value={item.quantity}
                   onChange={(e) => updateItem(index, "quantity", parseFloat(e.target.value) || 0)}
-                  className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none text-sm text-slate-800"
+                  className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none text-base sm:text-sm text-slate-800"
                 />
               </div>
               <div className="sm:col-span-1">
@@ -297,18 +298,19 @@ export function InvoiceForm({
                   type="text"
                   value={item.unit}
                   onChange={(e) => updateItem(index, "unit", e.target.value)}
-                  className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none text-sm text-slate-800"
+                  className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none text-base sm:text-sm text-slate-800"
                 />
               </div>
               <div className="sm:col-span-2">
                 <label className="block text-xs font-medium text-slate-500 mb-1">Cena</label>
                 <input
                   type="number"
+                  inputMode="decimal"
                   min={0}
                   step={0.01}
                   value={item.unit_price}
                   onChange={(e) => updateItem(index, "unit_price", parseFloat(e.target.value) || 0)}
-                  className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none text-sm text-slate-800"
+                  className="w-full px-3 py-2.5 rounded-lg border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none text-base sm:text-sm text-slate-800"
                 />
               </div>
               <div className="sm:col-span-2">
@@ -370,11 +372,11 @@ export function InvoiceForm({
       </div>
 
       {/* Actions */}
-      <div className="flex items-center gap-3">
+      <div className="flex flex-col md:flex-row md:items-center gap-3">
         <button
           type="submit"
           disabled={saving}
-          className="bg-amber-500 hover:bg-amber-600 text-white font-semibold py-3 px-8 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full md:w-auto bg-amber-500 hover:bg-amber-600 text-white font-semibold py-3 px-8 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {saving
             ? "Čuvam..."
@@ -385,7 +387,7 @@ export function InvoiceForm({
         <button
           type="button"
           onClick={() => router.back()}
-          className="text-slate-500 hover:text-slate-700 font-medium py-3 px-6 rounded-xl transition-colors"
+          className="w-full md:w-auto text-slate-500 hover:text-slate-700 font-medium py-3 px-6 rounded-xl transition-colors"
         >
           Otkaži
         </button>
