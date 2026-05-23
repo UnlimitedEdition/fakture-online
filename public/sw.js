@@ -1,7 +1,10 @@
 // FaktureOnline service worker — shell cache + offline fallback.
 // Versioned to invalidate old caches on deploy.
-const CACHE_VERSION = "fo-v1";
-const SHELL_URLS = ["/", "/dashboard", "/login", "/offline"];
+// NOTE: /dashboard is intentionally NOT pre-cached — first visit by an
+// unauthenticated browser would otherwise cache the login redirect HTML
+// and serve it to authenticated users on later visits.
+const CACHE_VERSION = "fo-v2";
+const SHELL_URLS = ["/", "/offline"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -38,13 +41,18 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Network-first for documents; fallback to cache; offline shell as last resort.
+  // Network-first for documents; fallback to cache; offline shell as last
+  // resort. We never cache responses that redirected (login redirect on
+  // protected routes) and never cache anything but text/html.
   if (req.mode === "navigate") {
     event.respondWith(
       fetch(req)
         .then((res) => {
-          const copy = res.clone();
-          caches.open(CACHE_VERSION).then((c) => c.put(req, copy));
+          const ct = res.headers.get("content-type") || "";
+          if (res.ok && !res.redirected && ct.includes("text/html")) {
+            const copy = res.clone();
+            caches.open(CACHE_VERSION).then((c) => c.put(req, copy));
+          }
           return res;
         })
         .catch(() =>
