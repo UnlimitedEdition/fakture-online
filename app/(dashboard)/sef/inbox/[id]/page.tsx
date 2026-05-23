@@ -93,15 +93,11 @@ export default async function InboxDetailPage(props: {
         <InboxActions inboxId={row.id} />
       )}
 
-      {row.raw_xml_excerpt && (
-        <details className="bg-white rounded-2xl border border-gray-100 p-6">
-          <summary className="text-sm font-medium text-slate-700 cursor-pointer">
-            XML preview (prvih 4 KB)
-          </summary>
-          <pre className="mt-4 text-xs text-slate-600 bg-gray-50 p-4 rounded-lg overflow-x-auto font-mono whitespace-pre-wrap">
-            {row.raw_xml_excerpt}
-          </pre>
-        </details>
+      {row.archive_path && (
+        <div className="bg-white rounded-2xl border border-gray-100 p-6 text-sm text-slate-500">
+          Originalan UBL XML čuva se u arhivi 10 godina (Zakon o e-fakturisanju).
+          Pristup za potrebe poreskog organa preko administratora.
+        </div>
       )}
     </div>
   );

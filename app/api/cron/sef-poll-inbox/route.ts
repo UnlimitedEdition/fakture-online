@@ -118,7 +118,7 @@ export async function GET(req: NextRequest) {
           total_amount: parsed?.totalAmount ?? row.Amount ?? null,
           tax_amount: parsed?.taxAmount ?? null,
           sef_status: status,
-          raw_xml_excerpt: xmlRes.raw.slice(0, 4000),
+          // raw XML stored in Storage bucket, not in row (PII)
           is_demo: creds.isDemo,
         });
         totalNew++;

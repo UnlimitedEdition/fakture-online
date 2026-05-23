@@ -22,6 +22,48 @@ import { sefCheckCompany } from "@/lib/sef/api/company";
 import { sefInboxAction } from "@/lib/sef/api/inbox-action";
 import type { SefApiCallKind, SefDocType } from "@/lib/sef/types";
 
+// Whitelist the SEF response fields we audit. Anything else (supplier names,
+// PIBs in error messages, etc.) is dropped — defense against accidental
+// PII storage in fo_sef_documents.response_summary.
+function pickResponseSummary(raw: unknown): Record<string, unknown> {
+  if (!raw || typeof raw !== "object") return {};
+  const r = raw as Record<string, unknown>;
+  const out: Record<string, unknown> = {};
+  // Allowed top-level keys (status enum strings, IDs, error codes/messages)
+  const ALLOWED = new Set([
+    "SalesInvoiceId",
+    "InvoiceId",
+    "PurchaseInvoiceId",
+    "InvoiceNumber",
+    "Status",
+    "DateSent",
+    "DateChanged",
+    "Code",
+    "Message",
+    "Errors",
+    "ErrorMessages",
+    "Registered",
+    "JBKJS",
+    "IsBudgetUser",
+  ]);
+  for (const k of ALLOWED) {
+    if (k in r) {
+      const v = r[k];
+      // Cap string lengths to avoid PII echo-back
+      if (typeof v === "string") {
+        out[k] = v.slice(0, 200);
+      } else if (Array.isArray(v)) {
+        out[k] = v.slice(0, 10).map((x) =>
+          typeof x === "string" ? x.slice(0, 200) : x,
+        );
+      } else if (typeof v === "boolean" || typeof v === "number" || v === null) {
+        out[k] = v;
+      }
+    }
+  }
+  return out;
+}
+
 interface ApiCallLogArgs {
   invoiceId?: string;
   inboxId?: string;
@@ -331,7 +373,7 @@ export async function sendInvoiceToSef(invoiceId: string, documentType: SefDocTy
     endpoint: "/sales-invoice/ubl",
     httpStatus: res.httpStatus,
     requestHash,
-    response: res.data as Record<string, unknown> ?? {},
+    response: pickResponseSummary(res.data),
     durationMs: res.durationMs,
     success: res.ok,
     errorCode: res.errorCode,
@@ -405,7 +447,7 @@ export async function cancelSefInvoice(invoiceId: string, comment?: string) {
     callKind: "cancel",
     endpoint: "/sales-invoice/cancel",
     httpStatus: res.httpStatus,
-    response: (res.data as Record<string, unknown>) ?? {},
+    response: pickResponseSummary(res.data),
     durationMs: res.durationMs,
     success: res.ok,
     errorCode: res.errorCode,
@@ -450,7 +492,7 @@ export async function stornoSefInvoice(invoiceId: string, comment?: string) {
     callKind: "storno",
     endpoint: "/sales-invoice/storno",
     httpStatus: res.httpStatus,
-    response: (res.data as Record<string, unknown>) ?? {},
+    response: pickResponseSummary(res.data),
     durationMs: res.durationMs,
     success: res.ok,
     errorCode: res.errorCode,
@@ -492,7 +534,7 @@ export async function checkSefStatus(invoiceId: string) {
     callKind: "get_status",
     endpoint: "/sales-invoice",
     httpStatus: res.httpStatus,
-    response: (res.data as Record<string, unknown>) ?? {},
+    response: pickResponseSummary(res.data),
     durationMs: res.durationMs,
     success: res.ok,
     errorCode: res.errorCode,
@@ -575,7 +617,7 @@ async function inboxActionInternal(
     callKind: "inbox_action",
     endpoint: "/purchase-invoice/acceptRejectPurchaseInvoice",
     httpStatus: res.httpStatus,
-    response: (res.data as Record<string, unknown>) ?? {},
+    response: pickResponseSummary(res.data),
     durationMs: res.durationMs,
     success: res.ok,
     errorCode: res.errorCode,
