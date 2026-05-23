@@ -1,6 +1,6 @@
 import { requireUser } from "@/lib/supabase/server";
 import Link from "next/link";
-import { getInvoiceStatus } from "@/lib/invoice-status";
+import { InvoiceListClient } from "./invoice-list-client";
 
 export default async function FakturePage() {
   const { supabase, user } = await requireUser();
@@ -58,80 +58,7 @@ export default async function FakturePage() {
           </Link>
         </div>
       ) : (
-        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-          {/* Desktop table */}
-          <div className="hidden md:block overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-100">
-                  <th className="text-left text-xs font-medium text-slate-400 uppercase tracking-wider px-6 py-3">Broj</th>
-                  <th className="text-left text-xs font-medium text-slate-400 uppercase tracking-wider px-6 py-3">Klijent</th>
-                  <th className="text-left text-xs font-medium text-slate-400 uppercase tracking-wider px-6 py-3">Datum</th>
-                  <th className="text-left text-xs font-medium text-slate-400 uppercase tracking-wider px-6 py-3">Iznos</th>
-                  <th className="text-left text-xs font-medium text-slate-400 uppercase tracking-wider px-6 py-3">Status</th>
-                  <th className="px-6 py-3"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {list.map((inv) => {
-                  const s = getInvoiceStatus(inv.status);
-                  return (
-                    <tr key={inv.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
-                      <td className="px-6 py-4">
-                        <Link href={`/fakture/${inv.id}`} className="text-sm font-medium text-teal-600 hover:text-teal-700">
-                          {inv.invoice_number}
-                        </Link>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-slate-600">
-                        {inv.client?.company_name || "—"}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-slate-500">{inv.issue_date}</td>
-                      <td className="px-6 py-4 text-sm font-medium text-slate-800">
-                        {Number(inv.total).toLocaleString("sr-RS")} {inv.currency}
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`inline-block text-xs px-2.5 py-1 rounded-full font-medium ${s.color}`}>
-                          {s.label}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <Link
-                          href={`/fakture/${inv.id}`}
-                          className="text-sm text-slate-400 hover:text-teal-600 transition-colors"
-                        >
-                          Pogledaj
-                        </Link>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Mobile cards */}
-          <div className="md:hidden divide-y divide-gray-50">
-            {list.map((inv) => {
-              const s = getInvoiceStatus(inv.status);
-              return (
-                <Link key={inv.id} href={`/fakture/${inv.id}`} className="block p-4 hover:bg-gray-50 transition-colors">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-medium text-teal-600">{inv.invoice_number}</span>
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${s.color}`}>
-                      {s.label}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-slate-500">{inv.client?.company_name || "—"}</span>
-                    <span className="text-sm font-medium text-slate-800">
-                      {Number(inv.total).toLocaleString("sr-RS")} RSD
-                    </span>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        </div>
+        <InvoiceListClient invoices={list} />
       )}
     </div>
   );
