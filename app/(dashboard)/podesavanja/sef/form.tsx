@@ -9,20 +9,22 @@ export function SefSettingsForm({
   isBudgetUser,
   jbkjs,
   callbackUrl,
-  callbackSecret,
+  hasCallbackSecret,
 }: {
   hasKey: boolean;
   demoMode: boolean;
   isBudgetUser: boolean;
   jbkjs: string;
   callbackUrl: string | null;
-  callbackSecret: string | null;
+  hasCallbackSecret: boolean;
 }) {
   const [pending, startTransition] = useTransition();
   const [message, setMessage] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+  const [revealedSecret, setRevealedSecret] = useState<string | null>(null);
 
   const onSubmit = (formData: FormData) => {
     setMessage(null);
+    setRevealedSecret(null);
     startTransition(async () => {
       try {
         const res = await setSefApiKey(formData);
@@ -30,6 +32,9 @@ export function SefSettingsForm({
           setMessage({ kind: "err", text: res.error });
         } else if ("success" in res && res.success) {
           setMessage({ kind: "ok", text: "Sačuvano." });
+          if (res.callbackSecret) {
+            setRevealedSecret(res.callbackSecret);
+          }
         }
       } catch {
         setMessage({ kind: "err", text: "Greška pri čuvanju. Pokušajte ponovo." });
@@ -128,10 +133,40 @@ export function SefSettingsForm({
         />
       </div>
 
-      {callbackUrl && (
+      {revealedSecret && callbackUrl && (
+        <div className="space-y-3 border-2 border-amber-300 bg-amber-50 rounded-xl p-4">
+          <p className="text-sm font-semibold text-amber-900">
+            ⚠️ Novi callback secret — sačuvajte sad, više neće biti prikazan
+          </p>
+          <p className="text-xs text-amber-800">
+            U DB čuvamo samo SHA-256 hash, ne plain. Ako ga izgubite, morate
+            generisati novi (Ažuriraj sa &quot;Rotiraj callback secret&quot;).
+          </p>
+          <label className="block text-xs font-medium text-amber-900">
+            Callback URL (postavite u SEF portalu pod API menadžment):
+          </label>
+          <input
+            type="text"
+            readOnly
+            value={callbackUrl}
+            className="w-full px-3 py-2 rounded-lg border border-amber-300 bg-white text-slate-700 font-mono text-xs"
+          />
+          <label className="block text-xs font-medium text-amber-900">
+            Secret (šalje se kroz <code>X-Callback-Secret</code> header):
+          </label>
+          <input
+            type="text"
+            readOnly
+            value={revealedSecret}
+            className="w-full px-3 py-2 rounded-lg border border-amber-300 bg-white text-slate-700 font-mono text-xs"
+          />
+        </div>
+      )}
+
+      {callbackUrl && hasCallbackSecret && !revealedSecret && (
         <div className="space-y-2 border-t border-gray-100 pt-4">
           <label className="block text-sm font-medium text-slate-700">
-            Callback URL (opciono — postavite u SEF portalu pod API menadžment)
+            Callback URL
           </label>
           <input
             type="text"
@@ -139,22 +174,19 @@ export function SefSettingsForm({
             value={callbackUrl}
             className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-slate-600 font-mono text-xs"
           />
-          {callbackSecret && (
-            <>
-              <label className="block text-xs font-medium text-slate-500 mt-2">
-                Pošaljite kroz <code>X-Callback-Secret</code> header (NE kao URL parametar):
-              </label>
-              <input
-                type="text"
-                readOnly
-                value={callbackSecret}
-                className="w-full px-4 py-2 rounded-xl border border-gray-200 bg-gray-50 text-slate-600 font-mono text-xs"
-              />
-            </>
-          )}
           <p className="text-xs text-slate-400">
-            Bez ovog, koristimo dnevni polling — status promene se vide sa ~1 dan zakašnjenja.
+            Callback secret je već generisan i čuva se samo kao hash. Ako vam treba ponovo,
+            čekirajte &quot;Rotiraj secret&quot; ispod i sačuvajte.
           </p>
+          <label className="flex items-center gap-3 text-sm text-slate-700 pt-2">
+            <input
+              type="checkbox"
+              name="rotate_callback"
+              value="true"
+              className="w-4 h-4 rounded border-gray-300"
+            />
+            Rotiraj callback secret (stari hash se zamenjuje novim)
+          </label>
         </div>
       )}
 

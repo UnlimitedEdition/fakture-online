@@ -54,10 +54,14 @@ export async function POST(
     .eq("id", userId)
     .maybeSingle();
 
-  // Constant-time compare. If profile missing, still do a dummy compare against
-  // a fixed-length sentinel to mask the "profile exists" timing oracle.
-  const storedSecret = profile?.sef_callback_secret ?? "x".repeat(providedSecret.length);
-  if (!safeEqual(providedSecret, storedSecret) || !profile) {
+  // Hash the incoming secret and constant-time-compare against stored hash.
+  // If no profile, still do a dummy compare to mask timing oracle.
+  const incomingHash = await (async () => {
+    const { sha256Hex } = await import("@/lib/sef/key-encryption");
+    return sha256Hex(providedSecret);
+  })();
+  const storedHash = profile?.sef_callback_secret ?? "x".repeat(64);
+  if (!safeEqual(incomingHash, storedHash) || !profile) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 

@@ -35,11 +35,10 @@ export default async function SefSettingsPage() {
       validSiteUrl = null;
     }
   }
-  const callbackUrl =
-    profile?.sef_callback_secret && validSiteUrl
-      ? `${validSiteUrl}/api/sef/callback/${user.id}`
-      : null;
-  const callbackSecret = profile?.sef_callback_secret ?? null;
+  const callbackUrl = validSiteUrl
+    ? `${validSiteUrl}/api/sef/callback/${user.id}`
+    : null;
+  const hasCallbackSecret = !!profile?.sef_callback_secret;
 
   return (
     <div className="space-y-6 max-w-2xl">
@@ -56,7 +55,7 @@ export default async function SefSettingsPage() {
         isBudgetUser={profile?.is_budget_user ?? false}
         jbkjs={profile?.jbkjs ?? ""}
         callbackUrl={callbackUrl}
-        callbackSecret={callbackSecret}
+        hasCallbackSecret={hasCallbackSecret}
       />
 
       <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 text-sm text-amber-800">

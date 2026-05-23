@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { logAudit } from "@/lib/audit-log";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { escapeHtml, sanitizeEmailHeader } from "@/lib/html-escape";
+import { isUuid } from "@/lib/uuid";
 
 interface InvoiceItemInput {
   description: string;
@@ -25,7 +26,15 @@ interface InvoicePayload {
 }
 
 export async function createInvoice(data: InvoicePayload) {
+  if (data.client_id && !isUuid(data.client_id)) {
+    return { error: "Neispravan ID klijenta." };
+  }
   const { supabase, user } = await requireUser();
+
+  const rl = await checkRateLimit("invoiceMutate", `user:${user.id}`);
+  if (!rl.allowed) {
+    return { error: "Previše izmena faktura u kratkom roku. Sačekajte." };
+  }
 
   const { data: allowed } = await supabase.rpc("fo_can_create_invoice");
   if (allowed === false) {
@@ -62,7 +71,14 @@ export async function createInvoice(data: InvoicePayload) {
 }
 
 export async function updateInvoice(invoiceId: string, data: InvoicePayload) {
+  if (!isUuid(invoiceId) || (data.client_id && !isUuid(data.client_id))) {
+    return { error: "Neispravan ID." };
+  }
   const { supabase, user } = await requireUser();
+  const rl = await checkRateLimit("invoiceMutate", `user:${user.id}`);
+  if (!rl.allowed) {
+    return { error: "Previše izmena u kratkom roku. Sačekajte." };
+  }
 
   const { error } = await supabase.rpc("fo_update_invoice", {
     p_invoice_id: invoiceId,
@@ -98,6 +114,9 @@ export async function updateInvoice(invoiceId: string, data: InvoicePayload) {
 }
 
 export async function updateInvoiceStatus(invoiceId: string, status: string) {
+  if (!isUuid(invoiceId)) {
+    return { error: "Neispravan ID fakture." };
+  }
   const { supabase, user } = await requireUser();
 
   const allowed = ["draft", "sent", "paid", "overdue", "cancelled"];
@@ -146,6 +165,9 @@ export async function updateInvoiceStatus(invoiceId: string, status: string) {
 }
 
 export async function deleteInvoice(invoiceId: string) {
+  if (!isUuid(invoiceId)) {
+    return { error: "Neispravan ID fakture." };
+  }
   const { supabase, user } = await requireUser();
 
   const { error, count } = await supabase
@@ -183,6 +205,9 @@ export async function deleteInvoice(invoiceId: string) {
 }
 
 export async function sendInvoiceEmail(invoiceId: string) {
+  if (!isUuid(invoiceId)) {
+    return { error: "Neispravan ID fakture." };
+  }
   const { supabase, user } = await requireUser();
 
   const rl = await checkRateLimit("email", `user:${user.id}`);

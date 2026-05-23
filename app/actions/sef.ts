@@ -20,6 +20,8 @@ import { sefGetInvoice, parseStatusResponse } from "@/lib/sef/api/get-status";
 import { sefGetSignedXml } from "@/lib/sef/api/get-xml";
 import { sefCheckCompany } from "@/lib/sef/api/company";
 import { sefInboxAction } from "@/lib/sef/api/inbox-action";
+import { isUuid } from "@/lib/uuid";
+import { checkRateLimit } from "@/lib/rate-limit";
 import type { SefApiCallKind, SefDocType } from "@/lib/sef/types";
 
 // Whitelist the SEF response fields we audit. Anything else (supplier names,
@@ -125,7 +127,9 @@ async function recordStatusChange(args: {
 }
 
 // ============================================================================
-// setSefApiKey — store encrypted SEF API key on the user's profile
+// setSefApiKey — store encrypted SEF API key + hashed callback secret.
+// Plain callback secret returned ONCE in the response so user can paste it
+// into the SEF portal; never readable from DB afterward.
 // ============================================================================
 export async function setSefApiKey(formData: FormData) {
   const { supabase, user } = await requireUser();
@@ -133,6 +137,7 @@ export async function setSefApiKey(formData: FormData) {
   const demoMode = formData.get("demo_mode") === "true";
   const isBudgetUser = formData.get("is_budget_user") === "true";
   const jbkjs = ((formData.get("jbkjs") as string) || "").trim() || null;
+  const rotateCallback = formData.get("rotate_callback") === "true";
 
   if (!apiKey || apiKey.length < 16) {
     return { error: "SEF API ključ izgleda neispravno (premali)." };
@@ -148,18 +153,35 @@ export async function setSefApiKey(formData: FormData) {
     return { error: "Greška pri enkripciji ključa. Proverite SEF_KEY_ENCRYPTION_KEY env var." };
   }
 
-  const callbackSecret = generateRandomSecret(32);
+  // Check if a secret already exists; only generate new one on first setup or
+  // when user explicitly requests rotation.
+  const { data: existing } = await supabase
+    .from("fo_profiles")
+    .select("sef_callback_secret")
+    .eq("id", user.id)
+    .single();
+
+  let plainCallbackSecret: string | null = null;
+  let callbackSecretHash: string | null | undefined = undefined;
+  if (!existing?.sef_callback_secret || rotateCallback) {
+    plainCallbackSecret = generateRandomSecret(32);
+    callbackSecretHash = await sha256Hex(plainCallbackSecret);
+  }
+
+  const update: Record<string, unknown> = {
+    sef_api_key_encrypted: encrypted.ciphertext,
+    sef_api_key_iv: encrypted.iv,
+    sef_demo_mode: demoMode,
+    is_budget_user: isBudgetUser,
+    jbkjs,
+  };
+  if (callbackSecretHash !== undefined) {
+    update.sef_callback_secret = callbackSecretHash;
+  }
 
   const { error } = await supabase
     .from("fo_profiles")
-    .update({
-      sef_api_key_encrypted: encrypted.ciphertext,
-      sef_api_key_iv: encrypted.iv,
-      sef_demo_mode: demoMode,
-      sef_callback_secret: callbackSecret,
-      is_budget_user: isBudgetUser,
-      jbkjs,
-    })
+    .update(update)
     .eq("id", user.id);
 
   if (error) {
@@ -170,11 +192,11 @@ export async function setSefApiKey(formData: FormData) {
   await logAudit({
     action: "profile.updated",
     resourceType: "sef_key",
-    metadata: { demo_mode: demoMode },
+    metadata: { demo_mode: demoMode, rotated_callback: !!plainCallbackSecret },
   });
 
   revalidatePath("/podesavanja/sef");
-  return { success: true };
+  return { success: true, callbackSecret: plainCallbackSecret };
 }
 
 export async function removeSefApiKey() {
@@ -197,7 +219,14 @@ export async function removeSefApiKey() {
 // checkClientSefEligibility — verify a client PIB is registered on SEF
 // ============================================================================
 export async function checkClientSefEligibility(clientId: string) {
+  if (!isUuid(clientId)) {
+    return { error: "Neispravan ID klijenta." };
+  }
   const { supabase, user } = await requireUser();
+  const rl = await checkRateLimit("sefPoll", `user:${user.id}`);
+  if (!rl.allowed) {
+    return { error: "Previše provera u kratkom roku." };
+  }
   const creds = await loadSefCredentials(user.id);
   if (!creds) {
     return { error: "Postavite SEF API ključ u podešavanjima." };
@@ -249,7 +278,14 @@ export async function checkClientSefEligibility(clientId: string) {
 // sendInvoiceToSef — full pipeline: validate → build XML → archive → POST → status
 // ============================================================================
 export async function sendInvoiceToSef(invoiceId: string, documentType: SefDocType = "invoice") {
+  if (!isUuid(invoiceId)) {
+    return { error: "Neispravan ID fakture." };
+  }
   const { supabase, user } = await requireUser();
+  const rl = await checkRateLimit("sefSend", `user:${user.id}`);
+  if (!rl.allowed) {
+    return { error: "Previše slanja u kratkom roku. Sačekajte sat vremena." };
+  }
   const creds = await loadSefCredentials(user.id);
   if (!creds) {
     return { error: "Postavite SEF API ključ u podešavanjima." };
@@ -423,7 +459,12 @@ export async function sendInvoiceToSef(invoiceId: string, documentType: SefDocTy
 // cancelSefInvoice — POST /sales-invoice/cancel
 // ============================================================================
 export async function cancelSefInvoice(invoiceId: string, comment?: string) {
+  if (!isUuid(invoiceId)) {
+    return { error: "Neispravan ID fakture." };
+  }
   const { supabase, user } = await requireUser();
+  const rl = await checkRateLimit("sefSend", `user:${user.id}`);
+  if (!rl.allowed) return { error: "Previše SEF akcija u kratkom roku." };
   const creds = await loadSefCredentials(user.id);
   if (!creds) return { error: "Postavite SEF API ključ." };
 
@@ -468,7 +509,12 @@ export async function cancelSefInvoice(invoiceId: string, comment?: string) {
 // stornoSefInvoice — POST /sales-invoice/storno
 // ============================================================================
 export async function stornoSefInvoice(invoiceId: string, comment?: string) {
+  if (!isUuid(invoiceId)) {
+    return { error: "Neispravan ID fakture." };
+  }
   const { supabase, user } = await requireUser();
+  const rl = await checkRateLimit("sefSend", `user:${user.id}`);
+  if (!rl.allowed) return { error: "Previše SEF akcija u kratkom roku." };
   const creds = await loadSefCredentials(user.id);
   if (!creds) return { error: "Postavite SEF API ključ." };
 
@@ -513,7 +559,12 @@ export async function stornoSefInvoice(invoiceId: string, comment?: string) {
 // checkSefStatus — sync poll a single invoice's status + archive signed copy
 // ============================================================================
 export async function checkSefStatus(invoiceId: string) {
+  if (!isUuid(invoiceId)) {
+    return { error: "Neispravan ID fakture." };
+  }
   const { supabase, user } = await requireUser();
+  const rl = await checkRateLimit("sefPoll", `user:${user.id}`);
+  if (!rl.allowed) return { error: "Previše provera u kratkom roku." };
   const creds = await loadSefCredentials(user.id);
   if (!creds) return { error: "Postavite SEF API ključ." };
 
@@ -592,7 +643,12 @@ async function inboxActionInternal(
   action: "Accept" | "Reject",
   reason?: string,
 ) {
+  if (!isUuid(inboxId)) {
+    return { error: "Neispravan ID inbox unosa." };
+  }
   const { supabase, user } = await requireUser();
+  const rl = await checkRateLimit("sefSend", `user:${user.id}`);
+  if (!rl.allowed) return { error: "Previše SEF akcija u kratkom roku." };
   const creds = await loadSefCredentials(user.id);
   if (!creds) return { error: "Postavite SEF API ključ." };
 

@@ -4,6 +4,7 @@ import { requireUser } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { logAudit } from "@/lib/audit-log";
+import { isUuid } from "@/lib/uuid";
 
 export async function createClientAction(
   _prevState: { error: string } | null,
@@ -63,6 +64,9 @@ export async function updateClientAction(
   _prevState: { error: string } | null,
   formData: FormData,
 ) {
+  if (!isUuid(clientId)) {
+    return { error: "Neispravan ID klijenta." };
+  }
   const { supabase, user } = await requireUser();
 
   const company_name = (formData.get("company_name") as string)?.trim();
@@ -118,6 +122,9 @@ export async function updateClientAction(
 }
 
 export async function deleteClient(clientId: string) {
+  if (!isUuid(clientId)) {
+    return { error: "Neispravan ID klijenta." };
+  }
   const { supabase, user } = await requireUser();
 
   const { error, count } = await supabase
