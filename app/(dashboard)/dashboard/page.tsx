@@ -1,6 +1,7 @@
 import { requireUser } from "@/lib/supabase/server";
 import Link from "next/link";
 import { getInvoiceStatus } from "@/lib/invoice-status";
+import { LimitTracker } from "./limit-tracker";
 
 export default async function DashboardPage() {
   const { supabase, user } = await requireUser();
@@ -80,6 +81,9 @@ export default async function DashboardPage() {
         <StatCard label="Plaćeno" value={stats.paid.toString()} icon="check" color="emerald" />
         <StatCard label="Čeka / Kasni" value={`${stats.pending} / ${stats.overdue}`} icon="clock" color={stats.overdue > 0 ? "red" : "amber"} />
       </div>
+
+      {/* Paušal limit tracker */}
+      <LimitTracker />
 
       {/* Quick stats row */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

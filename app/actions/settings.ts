@@ -12,6 +12,14 @@ export async function updateProfile(
 
   // NOTE: `email` and `is_admin` are deliberately NOT writable from the form.
   // Email is authoritative in auth.users; is_admin is granted by an admin.
+  const limitEnabled = formData.get("pausal_limit_enabled") === "true";
+  const limitRaw = formData.get("pausal_limit_rsd") as string | null;
+  const limitParsed = limitRaw ? Number(limitRaw.replace(/[^\d.]/g, "")) : null;
+  const limitRsd =
+    limitParsed && Number.isFinite(limitParsed) && limitParsed > 0
+      ? limitParsed
+      : 8_000_000;
+
   const { error, count } = await supabase
     .from("fo_profiles")
     .update(
@@ -27,6 +35,8 @@ export async function updateProfile(
         bank_account: (formData.get("bank_account") as string) || "",
         invoice_prefix:
           (formData.get("invoice_prefix") as string)?.trim() || "FAK",
+        pausal_limit_enabled: limitEnabled,
+        pausal_limit_rsd: limitRsd,
       },
       { count: "exact" },
     )
