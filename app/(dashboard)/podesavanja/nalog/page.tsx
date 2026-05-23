@@ -1,16 +1,22 @@
 import { requireUser } from "@/lib/supabase/server";
 import { ChangePasswordForm } from "./change-password-form";
 import { DangerZone } from "./danger-zone";
+import { MfaSection } from "./mfa-section";
 
 export default async function NalogPage() {
-  const { user } = await requireUser();
+  const { supabase, user } = await requireUser();
+
+  // Fetch MFA state for the current user. listFactors returns groupings by
+  // factor type plus an `all` array. We only surface TOTP today.
+  const { data: factors } = await supabase.auth.mfa.listFactors();
+  const verifiedTotp = factors?.totp.find((f) => f.status === "verified") ?? null;
 
   return (
     <div className="space-y-8 max-w-2xl">
       <div>
         <h1 className="text-2xl font-bold text-slate-800">Nalog i bezbednost</h1>
         <p className="text-slate-500 text-sm mt-1">
-          Lozinka, podaci, brisanje naloga.
+          Lozinka, dvofaktorska autentifikacija, podaci, brisanje naloga.
         </p>
       </div>
 
@@ -21,6 +27,16 @@ export default async function NalogPage() {
           ostali uređaji se automatski odjavljuju.
         </p>
         <ChangePasswordForm />
+      </section>
+
+      <section className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">
+        <h2 className="font-semibold text-slate-800">
+          Dvofaktorska autentifikacija (2FA)
+        </h2>
+        <MfaSection
+          hasVerifiedFactor={!!verifiedTotp}
+          verifiedFactorId={verifiedTotp?.id ?? null}
+        />
       </section>
 
       <section className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">

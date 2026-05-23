@@ -142,6 +142,21 @@ export async function proxy(request: NextRequest) {
     return redirect;
   }
 
+  // 2FA enforcement: if the user has an enrolled factor (nextLevel === aal2)
+  // but the session is still aal1, gate every protected route behind the MFA
+  // challenge page. The /login/2fa route itself must be reachable to break
+  // the loop.
+  if (user && isProtectedPath(pathname) && pathname !== "/login/2fa") {
+    const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (aal?.currentLevel === "aal1" && aal?.nextLevel === "aal2") {
+      const url = request.nextUrl.clone();
+      url.pathname = "/login/2fa";
+      const redirect = NextResponse.redirect(url);
+      applySecurityHeaders(redirect, csp);
+      return redirect;
+    }
+  }
+
   applySecurityHeaders(supabaseResponse, csp);
   return supabaseResponse;
 }
@@ -162,6 +177,8 @@ export const config = {
   // /api routes (csp-report etc. — they don't render HTML and would only add
   // overhead), the SW, the favicon, and the manifest.
   matcher: [
+    // Broad matcher so CSP nonce lands on every HTML response, including
+    // /login/2fa. Excludes static/asset/api/SW paths.
     {
       source:
         "/((?!api|_next/static|_next/image|_next/data|favicon\\.ico|manifest\\.webmanifest|sw\\.js|robots\\.txt|sitemap\\.xml).*)",

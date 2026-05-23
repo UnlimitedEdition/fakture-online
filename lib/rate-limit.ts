@@ -21,6 +21,7 @@ function build(prefix: string, max: number, windowSec: number) {
 
 const limiters = {
   login: build("login", 5, 900),                  // 5 / 15min
+  mfa: build("mfa", 10, 900),                      // 10 / 15min (enroll/verify/challenge)
   register: build("register", 3, 3600),           // 3 / hour
   signup: build("signup", 5, 3600),               // 5 / hour
   email: build("email", 20, 3600),                // 20 / hour

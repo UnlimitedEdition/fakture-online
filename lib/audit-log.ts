@@ -18,7 +18,13 @@ export type AuditAction =
   | "client.updated"
   | "client.deleted"
   | "profile.updated"
-  | "signup.received";
+  | "signup.received"
+  | "mfa.enroll_started"
+  | "mfa.enroll_verified"
+  | "mfa.enroll_failed"
+  | "mfa.unenrolled"
+  | "mfa.challenge_success"
+  | "mfa.challenge_failed";
 
 type AuditArgs = {
   action: AuditAction;

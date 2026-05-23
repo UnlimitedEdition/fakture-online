@@ -46,6 +46,14 @@ export async function login(
   }
 
   await logAudit({ action: "login.success", metadata: { email_hash: hashEmail(email) } });
+
+  // If the user has MFA enrolled, the password sign-in only yields AAL1.
+  // Send them through the second-factor challenge before unlocking the app.
+  const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+  if (aal?.currentLevel === "aal1" && aal?.nextLevel === "aal2") {
+    redirect("/login/2fa");
+  }
+
   redirect("/dashboard");
 }
 
