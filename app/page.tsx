@@ -121,6 +121,36 @@ const icons = {
       <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
     </svg>
   ),
+  bank: (
+    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 2.25L2.25 9h19.5L12 2.25zM4.5 9v10.5m4.5-10.5v10.5m6-10.5v10.5m4.5-10.5v10.5M2.25 19.5h19.5" />
+    </svg>
+  ),
+  book: (
+    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+    </svg>
+  ),
+  qr: (
+    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5zM13.5 14.625h2.25v2.25H13.5v-2.25zM17.25 16.875h2.25v2.25h-2.25v-2.25zM15.75 18.375h1.5v1.875h-1.5v-1.875z" />
+    </svg>
+  ),
+  bell: (
+    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+    </svg>
+  ),
+  share: (
+    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z" />
+    </svg>
+  ),
+  shield: (
+    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 5.25-4.5 9.75-9 9.75S3 17.25 3 12V5.25l9-3 9 3V12z" />
+    </svg>
+  ),
 };
 
 /* ── Page ──────────────────────────────────────────────── */
@@ -139,10 +169,10 @@ export default function Home() {
   const faqRef = useReveal();
 
   /* Count-up refs */
-  const stat1 = useCountUp(500, "+");
-  const stat2 = useCountUp(10000, "+");
+  const stat1 = useCountUp(15, "");
+  const stat2 = useCountUp(6, "");
   const stat3 = useCountUp(30, "s");
-  const stat4 = useCountUp(98, "%");
+  const stat4 = useCountUp(100, "%");
 
   /* Form handler */
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -213,8 +243,9 @@ export default function Home() {
                 Naplatite <span className="text-teal-600">pre</span>.
               </h1>
               <p className="text-lg md:text-xl text-slate-500 mb-8 leading-relaxed">
-                Profesionalna faktura za 30 sekundi — pošaljite klijentu na email
-                ili direktno na <strong>SEF</strong>, pratite naplatu. Bez Excela, bez muke.
+                Profesionalna faktura za 30 sekundi — slanje na <strong>SEF</strong>,
+                automatsko <strong>uparivanje bankovnih izvoda</strong> i{" "}
+                <strong>IPS QR kod</strong> za uplatu na svakoj fakturi.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link
@@ -289,10 +320,10 @@ export default function Home() {
         <div className="max-w-6xl mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             {[
-              { ref: stat1, label: "korisnika" },
-              { ref: stat2, label: "faktura kreirano" },
-              { ref: stat3, label: "za kreiranje" },
-              { ref: stat4, label: "zadovoljnih" },
+              { ref: stat1, label: "faktura mesečno besplatno" },
+              { ref: stat2, label: "banaka za auto-uparivanje" },
+              { ref: stat3, label: "za kreiranje fakture" },
+              { ref: stat4, label: "SEF compliance" },
             ].map((s) => (
               <div key={s.label}>
                 <p className="text-3xl md:text-4xl font-bold text-white">
@@ -652,9 +683,16 @@ export default function Home() {
               { icon: icons.zap, title: "Faktura za 30 sekundi", desc: "Izaberite klijenta, dodajte stavke, PDF se generiše automatski. Brže nego da otvorite Word." },
               { icon: icons.mail, title: "Slanje jednim klikom", desc: "Email klijentu ili direktno na SEF — vi birate. Status se prati automatski." },
               { icon: icons.chart, title: "Praćenje naplate", desc: "Plaćeno, čeka, kasni — sve na jednom dashboard-u. Podsetnik za kašnjenje jednim klikom." },
+              { icon: icons.bank, title: "Bankovno uparivanje", desc: "Uvoz izvoda iz Intesa, NLB, Raiffeisen, OTP, ProCredit i AIK — auto-match po pozivu na broj. Niko drugi u Srbiji ne nudi besplatno." },
+              { icon: icons.book, title: "KPO knjiga automatski", desc: "Paušalci dobijaju automatsku KPO knjigu sa CSV eksportom — uz upozorenje kada se približavate godišnjem pragu od 6M RSD." },
+              { icon: icons.qr, title: "IPS QR za uplatu", desc: "NBS standard QR kod na svakoj fakturi — klijent skenira mobilnim telefonom i otvara nalog u svojoj banci." },
+              { icon: icons.phone, title: "Mobilna PWA app", desc: "Instalirajte FaktureOnline na iPhone ili Android home screen. Radi i bez interneta — offline shell, brzo otvaranje." },
+              { icon: icons.bell, title: "Podsetnici za neplaćene", desc: "Automatski mejlovi D+1 / D+7 / D+14 po isteku roka — klijent dobija učtiv podsetnik, vi ne morate ništa." },
+              { icon: icons.share, title: "WhatsApp, Viber, SMS share", desc: "Sa mobilnog telefona podelite fakturu preko WhatsApp, Viber, SMS ili email — native share dialog." },
+              { icon: icons.shield, title: "2FA zaštita naloga", desc: "TOTP autentifikacija sa Google Authenticator ili Authy aplikacijom — sigurnost banke za vaš nalog." },
               { icon: icons.users, title: "Baza klijenata", desc: "Jednom unesite klijenta — koristite ga na svakoj sledećoj fakturi. SEF eligibility check uključen." },
               { icon: icons.repeat, title: "Šabloni za ponavljajuće", desc: "Mesečna faktura jednim klikom — sa ažuriranim datumom i rednim brojem." },
-              { icon: icons.phone, title: "Radi na telefonu", desc: "Napravite i pošaljite fakturu sa telefona — na gradilištu, kod klijenta, bilo gde." },
+              { icon: icons.folder, title: "Multi-firma (uskoro)", desc: "Jedan nalog, više firmi — knjigovođe i preduzetnici sa više delatnosti prebacuju kontekst jednim klikom." },
             ].map((f, i) => (
               <div
                 key={f.title}
@@ -671,81 +709,269 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ─── Cenovnik ───────────────────────────────── */}
+      {/* ─── Comparison Table — zašto mi ────────────── */}
       <section className="py-16 md:py-24">
-        <div className="max-w-4xl mx-auto px-4">
+        <div className="max-w-5xl mx-auto px-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-center text-slate-800 mb-4">
+            Zašto FaktureOnline?
+          </h2>
+          <p className="text-slate-500 text-center mb-12 max-w-2xl mx-auto">
+            Uporedite šta dobijate kod nas naspram drugih SR rešenja.
+          </p>
+          <div className="overflow-x-auto rounded-2xl shadow-lg border border-gray-100 bg-white">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-stone-50 border-b border-gray-100">
+                  <th className="text-left p-4 font-semibold text-slate-600"></th>
+                  <th className="p-4 font-bold text-teal-600 bg-teal-50/60">FaktureOnline</th>
+                  <th className="p-4 font-semibold text-slate-500">Pausal.rs</th>
+                  <th className="p-4 font-semibold text-slate-500">Minimax</th>
+                  <th className="p-4 font-semibold text-slate-500">Eurofaktura</th>
+                </tr>
+              </thead>
+              <tbody className="text-center">
+                {[
+                  {
+                    label: "Besplatno faktura mesečno",
+                    us: "15",
+                    a: "5",
+                    b: "—",
+                    c: "70",
+                    highlight: false,
+                  },
+                  {
+                    label: "Slanje na SEF",
+                    us: "yes",
+                    a: "yes",
+                    b: "yes",
+                    c: "yes",
+                    highlight: false,
+                  },
+                  {
+                    label: "Bankovno uparivanje (auto-match)",
+                    us: "yes-free",
+                    a: "no",
+                    b: "samo plaćeni",
+                    c: "samo plaćeni",
+                    highlight: true,
+                  },
+                  {
+                    label: "IPS QR kod na fakturi",
+                    us: "yes",
+                    a: "no",
+                    b: "yes",
+                    c: "yes",
+                    highlight: true,
+                  },
+                  {
+                    label: "KPO knjiga sa CSV eksportom",
+                    us: "yes",
+                    a: "delimično",
+                    b: "yes",
+                    c: "no",
+                    highlight: false,
+                  },
+                  {
+                    label: "2FA zaštita naloga",
+                    us: "yes",
+                    a: "no",
+                    b: "yes",
+                    c: "yes",
+                    highlight: false,
+                  },
+                  {
+                    label: "Mobilna PWA app",
+                    us: "yes",
+                    a: "no",
+                    b: "delimično",
+                    c: "no",
+                    highlight: false,
+                  },
+                ].map((row) => (
+                  <tr
+                    key={row.label}
+                    className={`border-b border-gray-100 last:border-b-0 ${row.highlight ? "bg-amber-50/30" : ""}`}
+                  >
+                    <td className="text-left p-4 font-medium text-slate-700">{row.label}</td>
+                    {[row.us, row.a, row.b, row.c].map((val, idx) => {
+                      const isUs = idx === 0;
+                      const cellBase = `p-4 ${isUs ? "bg-teal-50/40 font-semibold" : ""}`;
+                      if (val === "yes") {
+                        return (
+                          <td key={idx} className={cellBase}>
+                            <span className={`inline-flex items-center justify-center ${isUs ? "text-teal-600" : "text-emerald-500"}`}>
+                              {icons.check}
+                            </span>
+                          </td>
+                        );
+                      }
+                      if (val === "yes-free") {
+                        return (
+                          <td key={idx} className={cellBase}>
+                            <span className="inline-flex items-center gap-1 text-teal-700 font-bold">
+                              {icons.check}
+                              <span className="text-xs">FREE</span>
+                            </span>
+                          </td>
+                        );
+                      }
+                      if (val === "no") {
+                        return (
+                          <td key={idx} className={`${cellBase} text-slate-300 font-bold text-lg`}>×</td>
+                        );
+                      }
+                      return (
+                        <td key={idx} className={`${cellBase} text-xs ${isUs ? "text-teal-700" : "text-slate-500"}`}>
+                          {val}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="text-xs text-slate-400 text-center mt-4">
+            Podaci sa zvaničnih sajtova konkurenata, april 2026. Funkcije obeležene
+            &ldquo;uskoro&rdquo; planirane su za sledeći kvartal.
+          </p>
+        </div>
+      </section>
+
+      {/* ─── Cenovnik ───────────────────────────────── */}
+      <section className="py-16 md:py-24 bg-stone-50">
+        <div className="max-w-6xl mx-auto px-4">
           <h2 className="text-3xl md:text-4xl font-bold text-center text-slate-800 mb-4">Izaberite plan</h2>
           <p className="text-slate-500 text-center mb-12">Počnite besplatno — nadogradite kad budete spremni.</p>
-          <div ref={pricingRef} className="grid md:grid-cols-2 gap-8">
+          <div ref={pricingRef} className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* Starter */}
-            <div className="reveal bg-white rounded-2xl shadow-lg p-8 border border-gray-200">
-              <p className="text-teal-600 font-bold text-sm mb-2">STARTER</p>
-              <p className="text-4xl font-bold text-slate-800 mb-1">
-                0 <span className="text-lg font-normal text-slate-400">din/mesec</span>
+            <div className="reveal bg-white rounded-2xl shadow-md p-6 border border-gray-200 flex flex-col">
+              <p className="text-teal-600 font-bold text-xs mb-2">FREE</p>
+              <p className="text-3xl font-bold text-slate-800 mb-1">
+                0 <span className="text-sm font-normal text-slate-400">din/mes</span>
               </p>
-              <p className="text-slate-400 text-sm mb-6">Zauvek besplatno</p>
-              <ul className="space-y-3 mb-8">
+              <p className="text-slate-400 text-xs mb-5">Zauvek besplatno</p>
+              <ul className="space-y-2 mb-6 flex-1">
                 {[
-                  "5 faktura mesečno",
-                  "Slanje na SEF (demo i produkcija)",
-                  "PDF generisanje",
-                  "Email slanje",
-                  "1 korisnik",
+                  "15 faktura mesečno",
+                  "Slanje na SEF (demo + prod)",
+                  "PDF + email slanje",
+                  "IPS QR na fakturi",
+                  "KPO knjiga za paušalce",
                   "Baza klijenata (do 10)",
-                  "Osnovni dizajn fakture",
+                  "Mobilna PWA app",
+                  "2FA zaštita naloga",
                 ].map((item) => (
-                  <li key={item} className="flex items-center gap-3 text-slate-600 text-sm">
-                    <span className="text-emerald-500">{icons.check}</span>
+                  <li key={item} className="flex items-start gap-2 text-slate-600 text-xs">
+                    <span className="text-emerald-500 shrink-0">{icons.check}</span>
                     {item}
                   </li>
                 ))}
               </ul>
               <Link
                 href="/register"
-                className="block text-center border-2 border-teal-600 text-teal-600 font-bold px-6 py-3 rounded-xl hover:bg-teal-50 transition-colors"
+                className="block text-center border-2 border-teal-600 text-teal-600 font-bold px-4 py-2.5 rounded-xl hover:bg-teal-50 transition-colors text-sm"
               >
                 Počni besplatno →
               </Link>
             </div>
 
             {/* Pro */}
-            <div className="reveal delay-100 bg-white rounded-2xl shadow-xl p-8 border-2 border-teal-500 relative">
-              <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-amber-500 text-white text-sm font-bold px-4 py-1 rounded-full">
-                PREPORUČENO
-              </div>
-              <p className="text-teal-600 font-bold text-sm mb-2 mt-2">PRO</p>
-              <p className="text-4xl font-bold text-slate-800 mb-1">
-                1.500 <span className="text-lg font-normal text-slate-400">din/mesec</span>
+            <div className="reveal delay-100 bg-white rounded-2xl shadow-md p-6 border border-gray-200 flex flex-col">
+              <p className="text-teal-600 font-bold text-xs mb-2">PRO</p>
+              <p className="text-3xl font-bold text-slate-800 mb-1">
+                1.500 <span className="text-sm font-normal text-slate-400">din/mes</span>
               </p>
-              <p className="text-slate-400 text-sm mb-6">Bez ugovora — otkažite kad hoćete</p>
-              <ul className="space-y-3 mb-8">
+              <p className="text-slate-400 text-xs mb-5">Za freelancere i paušalce</p>
+              <ul className="space-y-2 mb-6 flex-1">
                 {[
                   "Neograničen broj faktura",
-                  "Neograničeno SEF slanje (sa inbox-om)",
-                  "Svi SEF tipovi: storno, avans, knjižno odobrenje",
-                  "PDF sa vašim logom",
-                  "Email slanje + podsetnici za kašnjenje",
-                  "Neograničen broj klijenata",
-                  "Praćenje naplate",
-                  "Mesečni pregled prihoda",
-                  "Šabloni za ponavljajuće fakture",
-                  "Automatsko numerisanje",
-                  "10-godišnja zakonska arhiva XML-a",
-                  "Export za poresku",
-                  "Podrška putem Viber-a",
-                  "Prvih 7 dana besplatno",
+                  "Neograničeno SEF + inbox",
+                  "Svi SEF tipovi (storno, avans)",
+                  "Automatski podsetnici D+1/+7/+14",
+                  "Ponavljajuće fakture",
+                  "WhatsApp / Viber / SMS share",
+                  "Export za poresku (CSV/PDF)",
+                  "10-godišnja XML arhiva",
                 ].map((item) => (
-                  <li key={item} className="flex items-center gap-3 text-slate-600 text-sm">
-                    <span className="text-emerald-500">{icons.check}</span>
+                  <li key={item} className="flex items-start gap-2 text-slate-600 text-xs">
+                    <span className="text-emerald-500 shrink-0">{icons.check}</span>
                     {item}
                   </li>
                 ))}
               </ul>
               <Link
                 href="/register"
-                className="block text-center bg-amber-500 text-white font-bold px-6 py-4 rounded-xl hover:bg-amber-600 transition-colors text-lg shadow-md"
+                className="block text-center bg-teal-600 text-white font-bold px-4 py-2.5 rounded-xl hover:bg-teal-700 transition-colors text-sm shadow-sm"
               >
-                Započni besplatni period →
+                Probaj 7 dana →
+              </Link>
+            </div>
+
+            {/* Pro+ — preporučeno */}
+            <div className="reveal delay-200 bg-white rounded-2xl shadow-xl p-6 border-2 border-teal-500 relative flex flex-col">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-500 text-white text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap">
+                PREPORUČENO
+              </div>
+              <p className="text-teal-600 font-bold text-xs mb-2 mt-2">PRO+</p>
+              <p className="text-3xl font-bold text-slate-800 mb-1">
+                2.490 <span className="text-sm font-normal text-slate-400">din/mes</span>
+              </p>
+              <p className="text-slate-400 text-xs mb-5">Sa bankovnim uparivanjem</p>
+              <ul className="space-y-2 mb-6 flex-1">
+                {[
+                  "Sve iz Pro plana",
+                  "Bankovno uparivanje (auto-match)",
+                  "Intesa, NLB, Raiffeisen, OTP",
+                  "ProCredit, AIK izvodi",
+                  "KPO prag prediction",
+                  "Prioritetna podrška",
+                  "PDF sa vašim logom",
+                  "Mesečni pregled prihoda",
+                ].map((item) => (
+                  <li key={item} className="flex items-start gap-2 text-slate-600 text-xs">
+                    <span className="text-emerald-500 shrink-0">{icons.check}</span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+              <Link
+                href="/register"
+                className="block text-center bg-amber-500 text-white font-bold px-4 py-2.5 rounded-xl hover:bg-amber-600 transition-colors text-sm shadow-md"
+              >
+                Započni besplatno →
+              </Link>
+            </div>
+
+            {/* Agencija */}
+            <div className="reveal delay-300 bg-white rounded-2xl shadow-md p-6 border border-gray-200 flex flex-col">
+              <p className="text-teal-600 font-bold text-xs mb-2">AGENCIJA</p>
+              <p className="text-3xl font-bold text-slate-800 mb-1">
+                4.900 <span className="text-sm font-normal text-slate-400">din/mes</span>
+              </p>
+              <p className="text-slate-400 text-xs mb-5">Knjigovođe i više firmi</p>
+              <ul className="space-y-2 mb-6 flex-1">
+                {[
+                  "Sve iz Pro+ plana",
+                  "Multi-firma (scaffold, uskoro)",
+                  "Više korisnika po nalogu",
+                  "Knjigovodstvene role",
+                  "API pristup",
+                  "Bulk operacije",
+                  "Dedicated Viber podrška",
+                  "Onboarding sesija",
+                ].map((item) => (
+                  <li key={item} className="flex items-start gap-2 text-slate-600 text-xs">
+                    <span className="text-emerald-500 shrink-0">{icons.check}</span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+              <Link
+                href="/register"
+                className="block text-center border-2 border-teal-600 text-teal-600 font-bold px-4 py-2.5 rounded-xl hover:bg-teal-50 transition-colors text-sm"
+              >
+                Kontaktiraj nas →
               </Link>
             </div>
           </div>
@@ -803,7 +1029,7 @@ export default function Home() {
             {[
               {
                 q: "Koliko košta?",
-                a: "Starter plan je besplatan zauvek — 5 faktura mesečno. Pro plan je 1.500 din/mesec za neograničen broj faktura, bez ugovora.",
+                a: "Free plan je besplatan zauvek — 15 faktura mesečno. Pro je 1.500 din/mes (neograničeno + SEF inbox + podsetnici), Pro+ je 2.490 din/mes (sa bankovnim uparivanjem), Agencija 4.900 din/mes (multi-firma).",
               },
               {
                 q: "Da li je faktura pravno validna?",
@@ -826,8 +1052,8 @@ export default function Home() {
                 a: "Da, u Pro planu. Sačuvajte fakturu kao šablon i svaki mesec je kreirate jednim klikom — sa ažuriranim datumom i rednim brojem.",
               },
               {
-                q: "Šta ako mi treba više od 5 faktura mesečno?",
-                a: "Nadogradite na Pro plan za 1.500 din/mesec — neograničen broj faktura, praćenje naplate, šabloni i sve ostale funkcije.",
+                q: "Šta ako mi treba više od 15 faktura mesečno?",
+                a: "Nadogradite na Pro plan za 1.500 din/mesec — neograničen broj faktura, podsetnici za neplaćene, šabloni i sve ostale funkcije. Za bankovno uparivanje izaberite Pro+ (2.490 din).",
               },
               {
                 q: "Da li mogu da exportujem podatke?",
@@ -853,9 +1079,17 @@ export default function Home() {
       <section className="bg-gradient-to-r from-teal-600 to-teal-700 text-white py-16">
         <div className="max-w-3xl mx-auto px-4 text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">Spremni da olakšate fakturisanje?</h2>
-          <p className="text-teal-100 text-lg mb-8">
-            Profesionalna faktura za 30 sekundi — 5 mesečno besplatno, zauvek. Počnite danas.
+          <p className="text-teal-100 text-lg mb-6">
+            Profesionalna faktura za 30 sekundi — 15 mesečno besplatno, zauvek. Počnite danas.
           </p>
+          <div className="flex flex-wrap items-center justify-center gap-2 text-sm text-teal-100 mb-8">
+            <span className="bg-white/10 rounded-full px-3 py-1">Free · 15 faktura</span>
+            <span className="bg-white/10 rounded-full px-3 py-1">Pro · 1.500 RSD</span>
+            <span className="bg-amber-500 text-white font-semibold rounded-full px-3 py-1">
+              Pro+ · 2.490 RSD (+ bankovno uparivanje)
+            </span>
+            <span className="bg-white/10 rounded-full px-3 py-1">Agencija · 4.900 RSD</span>
+          </div>
           <Link
             href="/register"
             className="inline-block bg-amber-500 text-white font-bold px-8 py-4 rounded-xl text-lg hover:bg-amber-600 transition-colors shadow-lg"
@@ -870,7 +1104,7 @@ export default function Home() {
         <div className="max-w-lg mx-auto px-4">
           <h2 className="text-3xl font-bold text-center text-slate-800 mb-4">Prijavite se — besplatno</h2>
           <p className="text-slate-500 text-center mb-8">
-            Počnite sa Starter planom (besplatno) ili isprobajte Pro 7 dana bez obaveze.
+            Počnite sa Free planom (15 faktura mesečno, besplatno) ili isprobajte Pro/Pro+ 7 dana bez obaveze.
           </p>
           <form onSubmit={handleSubmit} className="space-y-5 bg-white rounded-2xl p-8 shadow-lg border border-gray-100">
             <input type="hidden" name="niche" value="fakture" />
@@ -982,7 +1216,7 @@ export default function Home() {
               )}
             </button>
             <p className="text-center text-slate-400 text-xs">
-              Starter: 5 faktura besplatno zauvek. Pro: 7 dana besplatno, bez kartice.
+              Free: 15 faktura besplatno zauvek. Pro/Pro+: 7 dana besplatno, bez kartice.
             </p>
           </form>
         </div>
