@@ -23,38 +23,71 @@ const SUPABASE_HOST =
   process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/^https?:\/\//, "") ??
   "*.supabase.co";
 
-// Per-request CSP with a fresh nonce. 'strict-dynamic' tells the browser to
-// trust any script that the nonce-allowed scripts load — letting Next.js's
-// framework chunks chain without us needing to whitelist every static file.
-// Next.js auto-injects this nonce on its <script> tags when it sees the
-// Content-Security-Policy header on the incoming request (it reads the
-// 'nonce-<value>' token).
-function buildCsp(nonce: string, isDev: boolean): string {
+// Per-request CSP. We split into two profiles:
+//
+//  - STRICT (nonce + strict-dynamic): for routes that render user data.
+//    Requires the layout to be dynamic so Next can inject the nonce into
+//    its inline RSC scripts.
+//  - STATIC (script-src 'self' + 'unsafe-inline'): for public landing pages
+//    that are static-prerendered. Next emits known-good inline hydration
+//    scripts at build time; allowing 'unsafe-inline' here is acceptable
+//    because no user data is rendered (XSS risk is bounded), and it lets
+//    the marketing pages stay edge-cached.
+//
+// XSS surface area: static pages render server-controlled marketing copy
+// only; no path parameters or query strings are echoed, no user input is
+// reflected. The protected pages (where any XSS would be catastrophic)
+// keep the strict nonce policy.
+const COMMON_DIRECTIVES = [
+  `default-src 'self'`,
+  `style-src 'self' 'unsafe-inline'`,
+  `img-src 'self' data: blob: https:`,
+  `font-src 'self' data:`,
+  `connect-src 'self' https://${SUPABASE_HOST} wss://${SUPABASE_HOST} https://*.upstash.io https://api.resend.com https://efaktura.mfin.gov.rs https://demoefaktura.mfin.gov.rs https://kjs.trezor.gov.rs`,
+  `frame-ancestors 'none'`,
+  `form-action 'self'`,
+  `base-uri 'self'`,
+  `object-src 'none'`,
+  `worker-src 'self' blob:`,
+  `manifest-src 'self'`,
+  `upgrade-insecure-requests`,
+  `report-uri /api/csp-report`,
+  `report-to csp-endpoint`,
+];
+
+function buildStrictCsp(nonce: string, isDev: boolean): string {
   return [
-    `default-src 'self'`,
-    // 'unsafe-eval' is required in dev because React's dev runtime uses eval
-    // for better stack traces. Stripped in production.
+    ...COMMON_DIRECTIVES,
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ""}`,
-    // Stylesheets must carry the nonce. Tailwind builds to a static .css
-    // file under /_next/static which 'self' already covers.
-    `style-src 'self' 'nonce-${nonce}'`,
-    // Inline style="..." attributes (e.g. error pages, dynamic widths on
-    // progress bars) are not script-injection vectors. Allowing the attr
-    // sink does NOT loosen script-src.
-    `style-src-attr 'unsafe-inline'`,
-    `img-src 'self' data: blob: https:`,
-    `font-src 'self' data:`,
-    `connect-src 'self' https://${SUPABASE_HOST} wss://${SUPABASE_HOST} https://*.upstash.io https://api.resend.com https://efaktura.mfin.gov.rs https://demoefaktura.mfin.gov.rs https://kjs.trezor.gov.rs`,
-    `frame-ancestors 'none'`,
-    `form-action 'self'`,
-    `base-uri 'self'`,
-    `object-src 'none'`,
-    `worker-src 'self' blob:`,
-    `manifest-src 'self'`,
-    `upgrade-insecure-requests`,
-    `report-uri /api/csp-report`,
-    `report-to csp-endpoint`,
   ].join("; ");
+}
+
+function buildStaticCsp(isDev: boolean): string {
+  return [
+    ...COMMON_DIRECTIVES,
+    `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
+  ].join("; ");
+}
+
+// Public paths that get the relaxed (static-friendly) CSP. Everything else
+// — /dashboard, /fakture, /klijenti, etc. — gets the strict nonce CSP.
+const PUBLIC_STATIC_PATHS = new Set([
+  "/",
+  "/login",
+  "/login/2fa",
+  "/register",
+  "/register/check-email",
+  "/forgot-password",
+  "/auth/reset-password",
+  "/uslovi",
+  "/privatnost",
+  "/podrska",
+  "/hvala",
+  "/offline",
+]);
+
+function isStaticPublicPath(pathname: string): boolean {
+  return PUBLIC_STATIC_PATHS.has(pathname);
 }
 
 function generateNonce(): string {
@@ -72,16 +105,21 @@ function generateNonce(): string {
 
 export async function proxy(request: NextRequest) {
   const isDev = process.env.NODE_ENV === "development";
-  const nonce = generateNonce();
-  const csp = buildCsp(nonce, isDev);
+  const pathname = request.nextUrl.pathname;
+  const useStrict = !isStaticPublicPath(pathname);
+  const nonce = useStrict ? generateNonce() : "";
+  const csp = useStrict
+    ? buildStrictCsp(nonce, isDev)
+    : buildStaticCsp(isDev);
 
-  // Propagate the nonce into the request headers so the root layout (and any
-  // server component) can read it via headers().get('x-nonce'). Next.js also
-  // parses the Content-Security-Policy request header and auto-applies the
-  // nonce to its own framework scripts during SSR.
+  // Only inject the nonce request header when strict CSP is active. Reading
+  // headers() in the root layout opts the route into dynamic rendering, so
+  // public static pages must not see the header.
   const requestHeaders = new Headers(request.headers);
-  requestHeaders.set("x-nonce", nonce);
-  requestHeaders.set("Content-Security-Policy", csp);
+  if (useStrict) {
+    requestHeaders.set("x-nonce", nonce);
+    requestHeaders.set("Content-Security-Policy", csp);
+  }
 
   let supabaseResponse = NextResponse.next({
     request: { headers: requestHeaders },
@@ -123,8 +161,6 @@ export async function proxy(request: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-
-  const pathname = request.nextUrl.pathname;
 
   if (!user && isProtectedPath(pathname)) {
     const url = request.nextUrl.clone();
