@@ -3,6 +3,7 @@
   "crons": [
     { "path": "/api/cron/retention-purge", "schedule": "0 2 * * *" },
     { "path": "/api/cron/sef-refresh-registries", "schedule": "0 3 * * *" },
+    { "path": "/api/cron/recurring-generator", "schedule": "0 5 * * *" },
     { "path": "/api/cron/sef-poll-status", "schedule": "0 6 * * *" },
     { "path": "/api/cron/sef-poll-inbox", "schedule": "0 7 * * *" }
   ]
