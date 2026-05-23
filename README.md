@@ -120,6 +120,32 @@ The schema and policies are defined in `migrations/`. Key properties:
 - `fo_audit_log` records logins, mutations, admin access (with IP + UA).
 - `fo_subscriptions` / `fo_payments` scaffold for local Serbian processor.
 
+## SEF (Sistem Elektronskih Faktura)
+
+Full integration with Serbia's mandatory e-invoicing platform:
+
+- **Send invoices** to SEF (types 380, 381, 383, 384, 386)
+- **Receive inbox** of invoices from suppliers (accept/reject with reason)
+- **Cancel / storno** sent invoices
+- **Daily polling cron** for status changes + new inbox docs
+- **Optional webhook callback** for real-time status updates
+- **Pre-flight validation** (PIB ISO 7064 MOD 11,10, tax math, schema)
+- **PIB eligibility check** before sending (cached SEF companies registry)
+- **AES-GCM-encrypted** per-user API key (master key in `SEF_KEY_ENCRYPTION_KEY`)
+- **10-year XML archive** in Supabase Storage (`sef-xml` bucket) per Zakon o
+  elektronskom fakturisanju
+- **Demo + production** environments switchable per user
+- **60 unit + snapshot tests** for PIB validation, tax math, UBL generation,
+  UBL parsing
+
+See:
+- `docs/sef-setup.md` — onboarding + portal API key generation + first send
+- `docs/sef-architecture.md` — state machine, data model, cron schedule,
+  failure modes
+
+UI lives under `/sef` (overview, sent, inbox) and `/podesavanja/sef`
+(API key configuration). Core libs are in `lib/sef/`.
+
 ## Authentication
 
 - Email + password via Supabase Auth.
