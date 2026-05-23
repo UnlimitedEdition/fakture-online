@@ -60,6 +60,24 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // 2FA enforcement: if the user has an enrolled factor (nextLevel === aal2)
+  // but the session is still aal1, gate every protected route behind the MFA
+  // challenge page. The /login/2fa route itself must be reachable to break
+  // the loop, and we don't bother gating the bare /login path either since
+  // the post-login redirect handles it.
+  if (
+    user &&
+    isProtectedPath(pathname) &&
+    pathname !== "/login/2fa"
+  ) {
+    const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (aal?.currentLevel === "aal1" && aal?.nextLevel === "aal2") {
+      const url = request.nextUrl.clone();
+      url.pathname = "/login/2fa";
+      return NextResponse.redirect(url);
+    }
+  }
+
   return supabaseResponse;
 }
 
@@ -82,6 +100,7 @@ export const config = {
     "/banka",
     "/banka/:path*",
     "/login",
+    "/login/2fa",
     "/register",
   ],
 };
