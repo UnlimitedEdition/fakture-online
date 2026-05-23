@@ -1,9 +1,11 @@
 import { requireUser } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
+import { headers } from "next/headers";
 import Link from "next/link";
 import { getInvoiceStatus } from "@/lib/invoice-status";
 import { getOwnLogoUrl } from "@/app/actions/profile-logo";
 import { InvoiceActions } from "./invoice-actions";
+import { ShareButtons } from "./share-buttons";
 
 export default async function FakturaDetailPage(props: { params: Promise<{ id: string }> }) {
   const { id } = await props.params;
@@ -65,6 +67,21 @@ export default async function FakturaDetailPage(props: { params: Promise<{ id: s
 
   const s = getInvoiceStatus(invoice.status);
 
+  // Build absolute invoice URL for share message. Prefer the configured site URL;
+  // otherwise reconstruct from forwarded headers (works behind Vercel proxy).
+  const h = await headers();
+  const envSiteUrl =
+    process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL;
+  const origin =
+    envSiteUrl ||
+    (() => {
+      const host = h.get("x-forwarded-host") || h.get("host");
+      const proto = h.get("x-forwarded-proto") || "https";
+      return host ? `${proto}://${host}` : "";
+    })();
+  const invoiceUrl = `${origin}/fakture/${id}`;
+  const senderName = profile?.company_name || profile?.owner_name || null;
+
   return (
     <div className="space-y-6 max-w-4xl">
       {/* Header */}
@@ -86,6 +103,18 @@ export default async function FakturaDetailPage(props: { params: Promise<{ id: s
           sefEnabled={!!sefKeyRes.data?.sef_api_key_encrypted}
         />
       </div>
+
+      {/* Mobile share buttons (WhatsApp / Viber / Email / SMS) */}
+      <ShareButtons
+        invoiceNumber={invoice.invoice_number}
+        clientName={invoice.client?.company_name ?? null}
+        clientPhone={invoice.client?.phone ?? null}
+        total={invoice.total}
+        currency={invoice.currency}
+        dueDate={invoice.due_date ?? null}
+        invoiceUrl={invoiceUrl}
+        senderName={senderName}
+      />
 
       {/* Invoice card */}
       <div className="bg-white rounded-2xl border border-gray-100 p-6 md:p-10 print:border-none print:shadow-none print:p-0">
