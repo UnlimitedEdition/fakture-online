@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <rect width="256" height="256" rx="48" fill="#0d9488"/>
+  <path d="M64 56h96l40 40v104a16 16 0 0 1-16 16H64a16 16 0 0 1-16-16V72a16 16 0 0 1 16-16z" fill="#ffffff" opacity="0.95"/>
+  <path d="M160 56v40h40" fill="none" stroke="#0d9488" stroke-width="6" stroke-linejoin="round"/>
+  <g fill="#0d9488" font-family="system-ui, -apple-system, sans-serif" font-weight="700">
+    <rect x="76" y="118" width="80" height="8" rx="2"/>
+    <rect x="76" y="138" width="104" height="8" rx="2"/>
+    <rect x="76" y="158" width="64" height="8" rx="2"/>
+    <rect x="76" y="180" width="104" height="14" rx="3" fill="#f59e0b"/>
+  </g>
+</svg>

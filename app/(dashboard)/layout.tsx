@@ -1,6 +1,7 @@
 import { requireUser } from "@/lib/supabase/server";
 import { isAdmin } from "@/lib/admin";
 import { SidebarNav } from "./sidebar-nav";
+import { ServiceWorkerRegister } from "./service-worker-register";
 
 export default async function DashboardLayout({
   children,
@@ -33,6 +34,7 @@ export default async function DashboardLayout({
       <main className="flex-1 ml-0 md:ml-64">
         <div className="p-4 md:p-8 max-w-7xl mx-auto">{children}</div>
       </main>
+      <ServiceWorkerRegister />
     </div>
   );
 }

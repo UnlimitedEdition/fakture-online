@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -12,6 +12,13 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+export const viewport: Viewport = {
+  themeColor: "#0d9488",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+};
+
 export const metadata: Metadata = {
   title: "FaktureOnline — Online fakture za freelancere i paušalce",
   description:
@@ -22,6 +29,11 @@ export const metadata: Metadata = {
     description: "Bez Excela, bez muke. Kreirajte, pošaljite, naplatite.",
     type: "website",
     locale: "sr_RS",
+  },
+  appleWebApp: {
+    capable: true,
+    title: "Fakture",
+    statusBarStyle: "black-translucent",
   },
 };
 
