@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { logAudit } from "@/lib/audit-log";
-import { getRequestMeta } from "@/lib/request-meta";
+import { getRequestMeta, getSiteUrl } from "@/lib/request-meta";
 
 export async function login(
   _prevState: { error: string } | null,
@@ -92,7 +92,7 @@ export async function register(
     return { error: "Previše pokušaja registracije. Sačekajte sat vremena." };
   }
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "";
+  const siteUrl = await getSiteUrl();
   const { error } = await supabase.auth.signUp({
     email,
     password,
@@ -154,7 +154,7 @@ export async function requestPasswordReset(
     return { success: true };
   }
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "";
+  const siteUrl = await getSiteUrl();
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: siteUrl ? `${siteUrl}/auth/reset-password` : undefined,
   });

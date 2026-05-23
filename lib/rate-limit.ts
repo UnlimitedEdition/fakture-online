@@ -47,17 +47,30 @@ export async function checkRateLimit(
 ): Promise<RateLimitResult> {
   const limiter = limiters[kind];
   if (!limiter) {
-    // Fail-CLOSED in production. Fail-OPEN only in development convenience.
+    // Upstash not configured. We log loudly so ops sees it in Vercel runtime
+    // logs, but we fail-OPEN: Supabase Auth has its own brute-force protection
+    // and downstream operations are RLS-scoped to the user. Set
+    // STRICT_ENV_VALIDATION=true once Upstash is wired so the boot crashes
+    // instead of degrading silently.
     if (process.env.NODE_ENV === "production") {
-      console.error("[rate-limit] Upstash not configured in production — denying", { kind });
-      return { allowed: false };
+      console.error("[rate-limit] CRITICAL: Upstash not configured — limiter inactive", { kind });
     }
     return { allowed: true };
   }
-  const result = await limiter.limit(identifier);
-  return {
-    allowed: result.success,
-    reset: result.reset,
-    remaining: result.remaining,
-  };
+  try {
+    const result = await limiter.limit(identifier);
+    return {
+      allowed: result.success,
+      reset: result.reset,
+      remaining: result.remaining,
+    };
+  } catch (err) {
+    // Upstash transient failure (network, quota). Fail-OPEN with a loud log
+    // so a Redis outage doesn't lock everyone out of login.
+    console.error("[rate-limit] Upstash call failed — failing open", {
+      kind,
+      message: err instanceof Error ? err.message : String(err),
+    });
+    return { allowed: true };
+  }
 }
