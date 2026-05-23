@@ -19,10 +19,11 @@ describe("parseBankCsv: generic_csv", () => {
     });
   });
 
-  it("supports DD.MM.YYYY date format", () => {
+  it("supports DD.MM.YYYY date format and SR-locale amounts via semicolon delimiter", () => {
+    // Semicolon delimiter so the comma inside "1.500,50" isn't a column separator
     const csv = [
-      "datum,iznos,poziv",
-      "15.01.2026,1.500,50,12345-67890",
+      "datum;iznos;poziv",
+      "15.01.2026;1.500,50;12345-67890",
     ].join("\n");
 
     const rows = parseBankCsv(csv, "generic_csv");
