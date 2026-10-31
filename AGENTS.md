@@ -10,14 +10,15 @@ Vercel project: `fakture-online` (`prj_KdTCYnY5A9nlK7WzdxwqMdirIO7Q`, team `team
 
 The GitHub → Vercel auto-deploy webhook is broken (history rewrite during the
 security overhaul broke its trust chain). Until it's reconnected in the Vercel
-dashboard, **trigger production deploys manually via the deploy hook**:
+dashboard, **trigger production deploys manually via the deploy hook**.
+
+The deploy hook URL is a secret and is not stored in this repository. Get it from
+the Vercel project settings page (Settings → Git → Deploy Hooks) and keep it in a
+local, untracked file or environment variable (for example `VERCEL_DEPLOY_HOOK`):
 
 ```bash
-curl -X POST "https://api.vercel.com/v1/integrations/deploy/prj_KdTCYnY5A9nlK7WzdxwqMdirIO7Q/i8T2hlBNet"
+curl -X POST "$VERCEL_DEPLOY_HOOK"
 ```
 
 The hook deploys the current `master` branch. It returns `{"job":{"id":"..."}}` —
 poll Vercel MCP `list_deployments` to watch for the new build.
-
-If this hook is ever rotated or leaked, regenerate it from the Vercel project
-settings page (Settings → Git → Deploy Hooks) and replace the URL above.
